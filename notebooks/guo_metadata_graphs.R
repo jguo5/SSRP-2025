@@ -51,14 +51,14 @@ bw_max
 
 ##-----ARV status
 #baby
-arv_baby = table(metadata$baby_arv_selfreport)
+arv_baby <- table(metadata$baby_arv_selfreport)
 arv_baby
-arv_df = as.data.frame(arv_baby)
+arv_df <- as.data.frame(arv_baby)
 arv_df
 #mom
-arv_mom = table(metadata$mom_arv_selfreport)
+arv_mom <- table(metadata$mom_arv_selfreport)
 arv_mom
-arv_dfm = as.data.frame(arv_mom)
+arv_dfm <- as.data.frame(arv_mom)
 arv_dfm
 
 
@@ -71,10 +71,10 @@ table(metadata$hiv_mom_diagnosed_selfreport)
 
 #HIV barcode plot
 hiv_vector <- metadata$baby_hiv_selfreport
-hiv_vector = hiv_vector[!is.na(hiv_vector)]
-hiv_factor = factor(hiv_vector, levels = c(0, 1, 555), labels = c("Yes", "No", "Unknown"))
+hiv_vector <- hiv_vector[!is.na(hiv_vector)]
+hiv_factor <- factor(hiv_vector, levels = c(0, 1, 555), labels = c("Yes", "No", "Unknown"))
 
-dfhiv = data.frame(id = seq_along(hiv_factor), Mode = hiv_factor)
+dfhiv <- data.frame(id = seq_along(hiv_factor), Mode = hiv_factor)
 
 ggplot(dfhiv, aes(x = id, y = 1, fill = Mode)) +
   geom_tile(height = 1) +
@@ -120,11 +120,11 @@ p <- ggplot(plot_df, aes(y = proportion, fill = child_sex)) +
 print(p)
 
 #barcode plot
-sex_vector = metadata$child_sex
-sex_vector = sex_vector[!is.na(sex_vector)]
-sex_factor = factor(sex_vector, levels = c(0, 1), labels = c("Female", "Male"))
+sex_vector <- metadata$child_sex
+sex_vector <- sex_vector[!is.na(sex_vector)]
+sex_factor <- factor(sex_vector, levels = c(0, 1), labels = c("Female", "Male"))
 
-df = data.frame(id = seq_along(sex_factor), sex = sex_factor)
+df <- data.frame(id = seq_along(sex_factor), sex = sex_factor)
 
 ggplot(df, aes(x = id, y = 1, fill = sex)) +
   geom_tile(height = 1) +
@@ -170,17 +170,18 @@ p <- ggplot(plot_df, aes(y = proportion, fill = delivery_6m)) +
 print(p)
 
 #barcode plot
-delivery_vector = metadata$delivery_6m
-delivery_vector = delivery_vector[!is.na(delivery_vector)]
-delivery_factor = factor(delivery_vector, levels = c(0, 1), labels = c("Vaginal", "Cesarean"))
+delivery_vector <- metadata$delivery_6m
+delivery_vector <- delivery_vector[!is.na(delivery_vector)]
+delivery_factor <- factor(delivery_vector, levels = c(0, 1), labels = c("Vaginal", "Cesarean"))
 
-dfdeli = data.frame(id = seq_along(delivery_factor), Mode = delivery_factor)
+dfdeli <- data.frame(id = seq_along(delivery_factor), Mode = delivery_factor)
 
 ggplot(dfdeli, aes(x = id, y = 1, fill = Mode)) +
   geom_tile(height = 1) +
   scale_fill_manual(values = c("Vaginal" = "darkgreen", "Cesarean" = "lightyellow")) +
   theme_void() +
   labs(title = "Delivery Mode")
+
 
 
 ##-----feeding
@@ -209,35 +210,35 @@ feeding_18m1
 feeding_18m2
 feeding_18m3
 
-##-----Feeding graph
-# data3m = c(123, 85, 81)
-# data6m = c(97, 135, 56)
-# data12m = c(114, 176, 264)
-# data18m = c(75, 125, 209)
+#Feeding graph
+data3m <- c(feeding_3m[1], feeding_3m[2], feeding_3m[3])
+data6m <- c(feeding_6m[1], feeding_6m[2], feeding_6m[3])
+data12m <- c(feeding_12m1[1], feeding_12m2[1], feeding_12m3[1])
+data18m <- c(feeding_18m1[1], feeding_18m2[1], feeding_18m3[1])
 
-# allFeed <- c(data3m, data6m, data12m, data18m)
-# 
-# 
-# month <- rep(c("3m", "6m", "12m", "18m"), each = 3)
-# 
-# feedType <- rep(c("Breast", "Formula", "Mixed (3m, 6m)/Solid (12m, 18m)"), times = 4)
-# 
-# data_feed <- data.frame(Month = month, Type = feedType, Value = allFeed)
-# 
-# ggplot(data_feed, aes(x = Month, y = Value, fill = Type)) +
-#   geom_bar(stat = "identity", position = "stack") +  labs(x = "Month", y = "Number of Children", title = "Feeding Types by Month")
+allFeed <- c(data3m, data6m, data12m, data18m)
+
+month <- rep(c("3m", "6m", "12m", "18m"), each = 3)
+ 
+feedType <- rep(c("Breast", "Formula", "Mixed (3m, 6m)/Solid (12m, 18m)"), times = 4)
+
+data_feed <- data.frame(Month = month, Type = feedType, Value = allFeed)
+
+ggplot(data_feed, aes(x = Month, y = Value, fill = Type)) +
+geom_bar(stat = "identity", position = "stack") +  labs(x = "Month", y = "Number of Children", title = "Feeding Types by Month")
+
 
 
 ##-----Gestational weeks
 #table
-metadataGAKnown = read.csv("C:\\Users\\iwuba\\Downloads\\VKCLab\\2025-03-07-KhulaDataRequest_SA_ClinicalMdata - Sheet1.csv", header=TRUE)
-data_gaKnown = dplyr::filter(metadataGAKnown, ga_known == 1)
+metadataGAKnown <- read.csv("C:\\Users\\iwuba\\Downloads\\VKCLab\\2025-03-07-KhulaDataRequest_SA_ClinicalMdata - Sheet1.csv", header=TRUE)
+data_gaKnown <- dplyr::filter(metadataGAKnown, ga_known == 1)
 
-gwWeeks_mean = mean(data_gaKnown$ga_weeks, na.rm = TRUE)
-gwWeeks_sd = sd(data_gaKnown$ga_weeks, na.rm = TRUE)
-gwWeeks_median = median(data_gaKnown$ga_weeks, na.rm = TRUE)
-gwWeeks_max = max (data_gaKnown$ga_weeks, na.rm = TRUE)
-gwWeeks_min = min (data_gaKnown$ga_weeks, na.rm = TRUE)
+gwWeeks_mean <- mean(data_gaKnown$ga_weeks, na.rm = TRUE)
+gwWeeks_sd <- sd(data_gaKnown$ga_weeks, na.rm = TRUE)
+gwWeeks_median <- median(data_gaKnown$ga_weeks, na.rm = TRUE)
+gwWeeks_max <- max (data_gaKnown$ga_weeks, na.rm = TRUE)
+gwWeeks_min <- min (data_gaKnown$ga_weeks, na.rm = TRUE)
 
 gwWeeks_mean
 gwWeeks_sd
@@ -246,13 +247,13 @@ gwWeeks_max
 gwWeeks_min
 
 #barcode plot
-gest_vector = data_gaKnown$ga_weeks
-gest_vector = gest_vector[!is.na(gest_vector)]
+gest_vector <- data_gaKnown$ga_weeks
+gest_vector <- gest_vector[!is.na(gest_vector)]
 
-sorted_gest = sort(gest_vector)
+sorted_gest <- sort(gest_vector)
 
-dfgest = data.frame(Weeks = sorted_gest)
-dfgest$id = seq_along(dfgest$Weeks) 
+dfgest <- data.frame(Weeks = sorted_gest)
+dfgest$id <- seq_along(dfgest$Weeks) 
 
 
 ggplot(dfgest, aes(x = id, y = 1, fill = Weeks)) +
