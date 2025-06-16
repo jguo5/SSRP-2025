@@ -1,0 +1,259 @@
+---
+title: "send help"
+author: "Jackleen Guo"
+date: "2025-06-05"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+```
+
+## R Markdown
+
+```{r meta}
+metadata = read.csv("C:\\Users\\iwuba\\Downloads\\VKCLab\\2025-03-07-KhulaDataRequest_SA_ClinicalMdata - Sheet1.csv", header=TRUE)
+attach(metadata)
+head(metadata, 3)
+
+```
+
+
+##mom_edu (years)
+```{r}
+edu_mean = mean(metadata$mat_edu_years, na.rm = TRUE)
+edu_sd = sd(metadata$mat_edu_years, na.rm = TRUE)
+edu_median = median(metadata$mat_edu_years, na.rm = TRUE)
+
+edu_mean
+edu_sd 
+edu_median
+
+min (metadata$mat_edu_years, na.rm = TRUE)
+max (metadata$mat_edu_years, na.rm = TRUE)
+```
+
+
+##mom edu level
+```{r}
+table(metadata$mom_edu_en)
+
+```
+
+##child sex
+```{r}
+table(metadata$child_sex)
+data.meta$child_sex <- factor(metadata$child_sex, levels = c(0,1))
+plot_df <- metadata %>%
+  group_by(child_sex) %>%
+  summarise(N = n()) %>%
+  na.omit()
+# x = c(163, 166)
+
+plot_df$proportion <- plot_df$N  / sum(plot_df$N)
+
+p <- ggplot(plot_df, aes(y = proportion, fill = child_sex)) +
+  geom_bar(aes(x = ""), stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0)
+
+print(p)
+
+# pie(x, labels = c("Female (49.5%)", "Male (50.5%)"), main = "Child Sex", clockwise = TRUE)
+
+
+```
+
+##birth weight (grams)
+```{r}
+bw.mean = mean(data.meta$bw, na.rm = TRUE)
+bw.sd = sd(data.meta$bw, na.rm = TRUE)
+bw.median = median(data.meta$bw, na.rm = TRUE)
+
+bw.mean 
+bw.sd
+bw.median
+
+min (data.meta$bw, na.rm = TRUE)
+max (data.meta$bw, na.rm = TRUE)
+```
+
+##delivery type
+```{r}
+birth.type = table(data.meta$delivery_6m)
+birth.df = as.data.frame(birth.type)
+birth.df
+
+deli = c(209, 99)
+pie(deli, labels = c("Vaginal (67.9%)", "Cesarian (32.1%)"), main = "Delivery Type", clockwise = TRUE)
+
+```
+
+##feeding type 3m-6m
+```{r}
+feeding.3m = table(data.meta$feeding_type_3m)
+feeding.6m = table(data.meta$feeding_type_6m)
+feeding.3m
+feeding.6m
+
+```
+
+##feeding type 12m-18m
+```{r}
+feeding.12m1 = table(data.meta$feeding_type_12m___1)
+feeding.12m1
+feeding.12m2 = table(data.meta$feeding_type_12m___2)
+feeding.12m2
+feeding.12m3 = table(data.meta$feeding_type_12m___3)
+feeding.12m3
+
+feeding.18m1 = table(data.meta$feeding_type_18m___1)
+feeding.18m1
+feeding.18m2 = table(data.meta$feeding_type_18m___2)
+feeding.18m2
+feeding.18m3 = table(data.meta$feeding_type_18m___3)
+feeding.18m3
+
+
+```
+##Feeding bar plot
+```{r}
+data3m = c(123, 85, 81)
+data6m = c(97, 135, 56)
+data12m = c(114, 176, 264)
+data18m = c(75, 125, 209)
+
+allFeed = c(data3m, data6m, data12m, data18m)
+
+
+month = rep(c("3m", "6m", "12m", "18m"), each = 3)
+
+feedType = rep(c("Breast", "Formula", "Mixed (3m, 6m)/Solid (12m, 18m)"), times = 4)
+
+data.feed = data.frame(Month = month, Type = feedType, Value = allFeed)
+
+library (ggplot2)
+ggplot(data.feed, aes(x = Month, y = Value, fill = Type)) +
+  geom_bar(stat = "identity", position = "stack") +  labs(x = "Month", y = "Number of Children", title = "Feeding Types by Month")
+
+```
+
+
+##mom HIV status
+```{r}
+table(data.meta$hiv_mom_diagnosed_selfreport)
+
+```
+
+##mom ARV status
+```{r}
+arv.mom = table(data.meta$mom_arv_selfreport)
+arv.dfm = as.data.frame(arv.mom)
+arv.dfm
+```
+
+##baby HIV status
+```{r}
+table(data.meta$baby_hiv_selfreport)
+
+```
+
+##baby ARV status
+```{r}
+arv.baby = table(data.meta$baby_arv_selfreport)
+arv.df = as.data.frame(arv.baby)
+arv.df
+```
+##Gestational weeks
+```{r}
+data.metaGAKnown = read.csv("C:\\Users\\iwuba\\Downloads\\VKCLab\\2025-03-07-KhulaDataRequest_SA_ClinicalMdata - Sheet1.csv", header=TRUE)
+data.gaKnown = dplyr::filter(data.metaGAKnown, ga_known == 1)
+gwWeeks.mean = mean(data.gaKnown$ga_weeks, na.rm = TRUE)
+gwWeeks.mean
+gwWeeks.sd = sd(data.gaKnown$ga_weeks, na.rm = TRUE)
+gwWeeks.sd
+gwWeeks.median = median(data.gaKnown$ga_weeks, na.rm = TRUE)
+gwWeeks.median
+max (data.gaKnown$ga_weeks, na.rm = TRUE)
+min (data.gaKnown$ga_weeks, na.rm = TRUE)
+
+```
+
+##barcode map
+##child sex, delivery mode, gestational wks, hiv (child)
+```{r child sex}
+library(ggplot2)
+
+sex.value = data.meta$child_sex
+sex.value = sex.value[!is.na(sex.value)]
+sex.factor = factor(sex.value, levels = c(0, 1), labels = c("Female", "Male"))
+
+df = data.frame(id = seq_along(sex.factor), sex = sex.factor)
+
+ggplot(df, aes(x = id, y = 1, fill = sex)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Female" = "orange", "Male" = "lightblue")) +
+  theme_void() +
+  labs(title = "Child Sex")
+
+```
+
+```{r delivery}
+
+delivery.v = data.meta$delivery_6m
+delivery.v = delivery.v[!is.na(delivery.v)]
+delivery.factor = factor(delivery.v, levels = c(0, 1), labels = c("Vaginal", "Cesarean"))
+
+dfdeli = data.frame(id = seq_along(delivery.factor), Mode = delivery.factor)
+
+ggplot(dfdeli, aes(x = id, y = 1, fill = Mode)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Vaginal" = "darkgreen", "Cesarean" = "lightyellow")) +
+  theme_void() +
+  labs(title = "Delivery Mode")
+
+```
+
+```{r HIV}
+
+hiv.vector = data.meta$baby_hiv_selfreport
+hiv.vector = hiv.vector[!is.na(hiv.vector)]
+hiv.factor = factor(hiv.vector, levels = c(0, 1, 555), labels = c("Yes", "No", "Unknown"))
+
+dfhiv = data.frame(id = seq_along(hiv.factor), Mode = hiv.factor)
+
+ggplot(dfhiv, aes(x = id, y = 1, fill = Mode)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Yes" = "pink", "No" = "red", "Unknown" = "purple")) +
+  theme_void() +
+  labs(title = "HIV Diagnosis")
+
+```
+
+
+```{r gestational wks}
+
+#dfgest = data.frame(id = seq_along(gest.vector), Weeks = gest.vector)
+
+gest.vector = data.gaKnown$ga_weeks
+gest.vector = gest.vector[!is.na(gest.vector)]
+
+sorted.gest = sort(gest.vector)
+
+dfgest = data.frame(Weeks = sorted.gest)
+dfgest$id = seq_along(dfgest$Weeks) 
+
+
+ggplot(dfgest, aes(x = id, y = 1, fill = Weeks)) +
+  geom_raster() + scale_fill_gradientn(colours = c("pink", "red", "darkorange", "yellow", "lightgreen", "green"), name = "Weeks") + 
+  theme_minimal() +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  ) +
+  labs(title = "Gestational Weeks")
+
+```
