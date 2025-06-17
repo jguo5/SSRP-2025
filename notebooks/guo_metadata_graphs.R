@@ -186,7 +186,7 @@ p_mat_edu <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = mat_ed
   geom_tile(height = 1) +
   theme_void() +
   scale_fill_viridis_c() +
-  labs(title = "Materna Education (years)")
+  labs(title = "Maternal Education (years)")
 
 p_delivery <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = delivery_mode)) +
   geom_tile(height = 1) +
