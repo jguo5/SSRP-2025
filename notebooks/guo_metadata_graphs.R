@@ -23,7 +23,8 @@ processed_metadata <- metadata %>%
     "subject_id",
     "child_sex",
     "delivery_6m",
-    "medhx_mom___1_selfreport"
+    "medhx_mom___1_selfreport",
+    "mat_edu_years"
   ) %>%
   rename(
     delivery_mode = delivery_6m,
@@ -181,6 +182,12 @@ p_hiv <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = mom_hiv_st
   theme_void() +
   labs(title = "Maternal HIV")
 
+p_mat_edu <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = mat_edu_years)) +
+  geom_tile(height = 1) +
+  theme_void() +
+  scale_fill_viridis_c() +
+  labs(title = "Materna Education (years)")
+
 p_delivery <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = delivery_mode)) +
   geom_tile(height = 1) +
   scale_fill_manual(values = c("Vaginal" = "darkgreen", "Cesarean" = "lightyellow")) +
@@ -193,7 +200,7 @@ p_sex <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = child_sex)
   theme_void() +
   labs(title = "Child Sex")
 
-grid.arrange(p_hiv, p_delivery, p_sex, nrow = 3)
+grid.arrange(p_hiv, p_mat_edu, p_delivery, p_sex, nrow = 4)
 
 ##-----feeding
 
