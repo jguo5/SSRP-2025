@@ -2,19 +2,38 @@
 ##SSRP Metadata Graphs
 ## 6-16-2025
 
-
 ##-----setup and attach data
 library(dplyr)
 library(ggplot2)
 library(ggrepel)
 library(tidyverse)
+library(gridExtra)
+library(fs)
+library(here)
 set.seed(1234)
 
-metadata <- read.csv("C:\\Users\\iwuba\\Downloads\\VKCLab\\2025-03-07-KhulaDataRequest_SA_ClinicalMdata - Sheet1.csv", header=TRUE)
+metadata <- read.csv(fs::path(here::here(), "ext", "2025-03-07-KhulaSA_ClinicalMdata.csv"), header=TRUE)
 attach(metadata)
 head(metadata, 3)
 
+## Processing the Metadata
 
+processed_metadata <- metadata %>%
+  select(
+    "subject_id",
+    "child_sex",
+    "delivery_6m",
+    "medhx_mom___1_selfreport"
+  ) %>%
+  rename(
+    delivery_mode = delivery_6m,
+    mom_hiv_status = medhx_mom___1_selfreport
+  ) %>%
+  mutate(child_sex = factor(child_sex, ordered = FALSE, levels = c(0,1), labels = c("F", "M"))) %>%
+  mutate(delivery_mode = factor(delivery_mode, ordered = FALSE, levels = c(0, 1), labels = c("Vaginal", "Cesarean"))) %>%
+  mutate(mom_hiv_status = factor(mom_hiv_status, ordered = FALSE, levels = c(0, 1), labels = c("Negative", "Positive"))) %>%
+  arrange(mom_hiv_status) %>%
+  mutate( . , master_idx = 1:nrow(.))
 
 ##-----mom education
 edu_mean <- mean(metadata$mat_edu_years, na.rm = TRUE)
@@ -23,11 +42,11 @@ edu_median <- median(metadata$mat_edu_years, na.rm = TRUE)
 edu_min <- min (metadata$mat_edu_years, na.rm = TRUE)
 edu_max <- max (metadata$mat_edu_years, na.rm = TRUE)
 
-edu_mean
-edu_sd 
-edu_median
-edu_min
-edu_max
+print(paste0("Maternal education MEAN: ", edu_mean))
+print(edu_sd)
+print(edu_median)
+print(edu_min)
+print(edu_max)
 
 table(metadata$mom_edu_en) #mom edu level
 
@@ -41,10 +60,10 @@ bw_median <- median(metadata$bw, na.rm = TRUE)
 bw_min <- min (metadata$bw, na.rm = TRUE)
 bw_max <- max (metadata$bw, na.rm = TRUE)
 
-bw_mean
-bw_sd
-bw_median
-bw_min
+print(bw_mean)
+print(bw_sd)
+print(bw_median)
+print(bw_min)
 bw_max
 
 
@@ -52,14 +71,14 @@ bw_max
 ##-----ARV status
 #baby
 arv_baby <- table(metadata$baby_arv_selfreport)
-arv_baby
+print(arv_baby)
 arv_df <- as.data.frame(arv_baby)
-arv_df
+print(arv_df)
 #mom
 arv_mom <- table(metadata$mom_arv_selfreport)
-arv_mom
+print(arv_mom)
 arv_dfm <- as.data.frame(arv_mom)
-arv_dfm
+print(arv_dfm)
 
 
 
@@ -119,21 +138,6 @@ p <- ggplot(plot_df, aes(y = proportion, fill = child_sex)) +
 
 print(p)
 
-#barcode plot
-sex_vector <- metadata$child_sex
-sex_vector <- sex_vector[!is.na(sex_vector)]
-sex_factor <- factor(sex_vector, levels = c(0, 1), labels = c("Female", "Male"))
-
-df <- data.frame(id = seq_along(sex_factor), sex = sex_factor)
-
-ggplot(df, aes(x = id, y = 1, fill = sex)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Female" = "orange", "Male" = "lightblue")) +
-  theme_void() +
-  labs(title = "Child Sex")
-
-
-
 ##-----delivery type
 #table
 table(metadata$delivery_6m)
@@ -170,19 +174,26 @@ p <- ggplot(plot_df, aes(y = proportion, fill = delivery_6m)) +
 print(p)
 
 #barcode plot
-delivery_vector <- metadata$delivery_6m
-delivery_vector <- delivery_vector[!is.na(delivery_vector)]
-delivery_factor <- factor(delivery_vector, levels = c(0, 1), labels = c("Vaginal", "Cesarean"))
 
-dfdeli <- data.frame(id = seq_along(delivery_factor), Mode = delivery_factor)
+p_hiv <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = mom_hiv_status)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Negative" = "blue", "Positive" = "red")) +
+  theme_void() +
+  labs(title = "Maternal HIV")
 
-ggplot(dfdeli, aes(x = id, y = 1, fill = Mode)) +
+p_delivery <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = delivery_mode)) +
   geom_tile(height = 1) +
   scale_fill_manual(values = c("Vaginal" = "darkgreen", "Cesarean" = "lightyellow")) +
   theme_void() +
   labs(title = "Delivery Mode")
 
+p_sex <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = child_sex)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("F" = "orange", "M" = "lightblue")) +
+  theme_void() +
+  labs(title = "Child Sex")
 
+grid.arrange(p_hiv, p_delivery, p_sex, nrow = 3)
 
 ##-----feeding
 
@@ -219,7 +230,7 @@ data18m <- c(feeding_18m1[1], feeding_18m2[1], feeding_18m3[1])
 allFeed <- c(data3m, data6m, data12m, data18m)
 
 month <- rep(c("3m", "6m", "12m", "18m"), each = 3)
- 
+
 feedType <- rep(c("Breast", "Formula", "Mixed (3m, 6m)/Solid (12m, 18m)"), times = 4)
 
 data_feed <- data.frame(Month = month, Type = feedType, Value = allFeed)
@@ -253,11 +264,11 @@ gest_vector <- gest_vector[!is.na(gest_vector)]
 sorted_gest <- sort(gest_vector)
 
 dfgest <- data.frame(Weeks = sorted_gest)
-dfgest$id <- seq_along(dfgest$Weeks) 
+dfgest$id <- seq_along(dfgest$Weeks)
 
 
 ggplot(dfgest, aes(x = id, y = 1, fill = Weeks)) +
-  geom_raster() + scale_fill_gradientn(colours = c("red", "darkorange", "orange", "yellow", "lightgreen", "green"), name = "Weeks") + 
+  geom_raster() + scale_fill_gradientn(colours = c("red", "darkorange", "orange", "yellow", "lightgreen", "green"), name = "Weeks") +
   theme_minimal() +
   theme(
     axis.title = element_blank(),
