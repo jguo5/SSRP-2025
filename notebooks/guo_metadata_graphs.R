@@ -25,19 +25,89 @@ processed_metadata <- metadata %>%
     "delivery_6m",
     "medhx_mom___1_selfreport",
     "mat_edu_years",
-    "ga_weeks"
+    "ga_weeks",
+    
+    "feeding_type_3m",
+    "feeding_type_6m",
+    # "feeding_type_12m___1",
+    # "feeding_type_12m___2",
+    # "feeding_type_12m___3",
+    # "feeding_type_18m___1",
+    # "feeding_type_18m___2",
+    # "feeding_type_18m___3",
   ) %>%
   rename(
     delivery_mode = delivery_6m,
     mom_hiv_status = medhx_mom___1_selfreport,
-    gest_weeks = ga_weeks
+    gest_weeks = ga_weeks,
+    feed_3m = feeding_type_3m,
+    feed_6m = feeding_type_6m,
+    
+    # feed_breast = c(feeding_3m[1], feeding_6m[1], feeding_12m1, feeding_18m1),
+    # feed_formula = c(feeding_3m[2], feeding_6m[2], feeding12m2, feeding18m2),
+    # feed_mixed = c(feeding_3m[3], feeding_6m[3]),
+    # feed_solid = c(feeding_12m3, feeding_18m3)
   ) %>%
   mutate(child_sex = factor(child_sex, ordered = FALSE, levels = c(0,1), labels = c("F", "M"))) %>%
   mutate(delivery_mode = factor(delivery_mode, ordered = FALSE, levels = c(0, 1), labels = c("Vaginal", "Cesarean"))) %>%
   mutate(mom_hiv_status = factor(mom_hiv_status, ordered = FALSE, levels = c(0, 1), labels = c("Negative", "Positive"))) %>%
   arrange(mom_hiv_status) %>%
+  mutate(feed_3m = factor(feed_3m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
+  mutate(feed_6m = factor(feed_6m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
+  mutate(
+    feed_12m = if_else(feeding_type_12m___1 == 1, "Breast",
+               if_else(feeding_type_12m___2 == 1, "Formula",
+               if_else(feeding_type_12m___3 == 1, "Solid", "N/A"))),
+    feed_12m = factor(feed_12m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
+  ) %>%
+  mutate(
+    feed_18m = if_else(feeding_type_18m___1 == 1, "Breast",
+               if_else(feeding_type_18m___2 == 1, "Formula",
+               if_else(feeding_type_18m___3 == 1, "Solid", "N/A"))),
+    feed_18m = factor(feed_18m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
+  ) %>%
+  
   mutate( . , master_idx = 1:nrow(.))
 
+  # mutate(
+  #   feed_breast = if_else(
+  #     feeding_type_3m == 1 | 
+  #     feeding_type_6m == 1 | 
+  #     feeding_type_12m___1 == 1 | 
+  #     feeding_type_18m___1 == 1,
+  #     1, 0
+  #   ),
+  #   feed_formula = if_else(
+  #     feeding_type_3m == 2 | 
+  #     feeding_type_6m == 2 | 
+  #     feeding_type_12m___2 == 1 | 
+  #     feeding_type_18m___2 == 1,
+  #     1, 0
+  #   ),
+  #   feed_mixed = if_else(
+  #     feeding_type_3m == 3 | 
+  #     feeding_type_6m == 3,
+  #     1, 0
+  #   ),
+  #   feed_solid = if_else(
+  #     feeding_type_12m___3 == 1 | 
+  #     feeding_type_18m___3 == 1,
+  #     1, 0
+  #   )
+  # )%>%
+  # mutate(
+  #   feed_type = case_when(
+  #     feed_breast == 1 ~ "Breast",
+  #     feed_formula == 1 ~ "Formula",
+  #     feed_mixed == 1 ~ "Mixed",
+  #     feed_solid == 1 ~ "Solid",
+  #     TRUE ~ "None"
+  #   )
+  # )%>%
+  # mutate(
+  #   feed_type = factor(feed_type, ordered = FALSE, levels = c("Breast", "Formula", "Mixed", "Solid"), labels = c("Breast", "Formula", "Mixed", "Solid"))
+  # )%>%
+  
 
 
 ##-----mom education
@@ -261,5 +331,33 @@ p_sex <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = child_sex)
   theme_void() +
   labs(title = "Child Sex")
 
+#add for feeding, diff colors for breast, formula, other
+
+p_3mfeed <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = feed_3m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet")) +
+  theme_void() +
+  labs(title = "Feeding Types 3m")
+
+p_6mfeed <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = feed_6m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet")) +
+  theme_void() +
+  labs(title = "Feeding Types 6m")
+
+p_12mfeed <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = feed_12m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan")) +
+  theme_void() +
+  labs(title = "Feeding Types 12m")
+
+p_18mfeed <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = feed_18m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan")) +
+  theme_void() +
+  labs(title = "Feeding Types 18m")
+
 
 grid.arrange(p_hiv, p_mat_edu, p_delivery, p_sex, p_gest_weeks, nrow = 5)
+
+grid.arrange(p_hiv, p_3mfeed, p_6mfeed, p_12mfeed, p_18mfeed, nrow = 5)
