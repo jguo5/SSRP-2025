@@ -28,13 +28,7 @@ processed_metadata <- metadata %>%
     "ga_weeks",
     
     "feeding_type_3m",
-    "feeding_type_6m",
-    # "feeding_type_12m___1",
-    # "feeding_type_12m___2",
-    # "feeding_type_12m___3",
-    # "feeding_type_18m___1",
-    # "feeding_type_18m___2",
-    # "feeding_type_18m___3",
+    "feeding_type_6m"
   ) %>%
   rename(
     delivery_mode = delivery_6m,
@@ -43,10 +37,6 @@ processed_metadata <- metadata %>%
     feed_3m = feeding_type_3m,
     feed_6m = feeding_type_6m,
     
-    # feed_breast = c(feeding_3m[1], feeding_6m[1], feeding_12m1, feeding_18m1),
-    # feed_formula = c(feeding_3m[2], feeding_6m[2], feeding12m2, feeding18m2),
-    # feed_mixed = c(feeding_3m[3], feeding_6m[3]),
-    # feed_solid = c(feeding_12m3, feeding_18m3)
   ) %>%
   mutate(child_sex = factor(child_sex, ordered = FALSE, levels = c(0,1), labels = c("F", "M"))) %>%
   mutate(delivery_mode = factor(delivery_mode, ordered = FALSE, levels = c(0, 1), labels = c("Vaginal", "Cesarean"))) %>%
@@ -67,47 +57,49 @@ processed_metadata <- metadata %>%
     feed_18m = factor(feed_18m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
   ) %>%
   
+
+
+# mutate(
+#   feed_breast = if_else(
+#            feeding_type_3m == 1 |
+#            feeding_type_6m == 1 |
+#            feeding_type_12m___1 == 1 |
+#            feeding_type_18m___1 == 1,
+#            1, 0
+#          ),
+#          feed_formula = if_else(
+#            feeding_type_3m == 2 |
+#            feeding_type_6m == 2 |
+#            feeding_type_12m___2 == 1 |
+#            feeding_type_18m___2 == 1,
+#            1, 0
+#          ),
+#          feed_mixed = if_else(
+#            feeding_type_3m == 3 |
+#            feeding_type_6m == 3,
+#            1, 0
+#          ),
+#          feed_solid = if_else(
+#            feeding_type_12m___3 == 1 |
+#            feeding_type_18m___3 == 1,
+#            1, 0
+#          )
+#        )%>%
+#        mutate(
+#          feed_type = case_when(
+#            feed_breast == 1 ~ "Breast",
+#            feed_formula == 1 ~ "Formula",
+#            feed_mixed == 1 ~ "Mixed",
+#            feed_solid == 1 ~ "Solid",
+#            TRUE ~ "None"
+#          )
+#        )%>%
+#        mutate(
+#          feed_type = factor(feed_type, ordered = FALSE, levels = c("Breast", "Formula", "Mixed", "Solid"), labels = c("Breast", "Formula", "Mixed", "Solid"))
+#        )%>%
+  
   mutate( . , master_idx = 1:nrow(.))
 
-  # mutate(
-  #   feed_breast = if_else(
-  #     feeding_type_3m == 1 | 
-  #     feeding_type_6m == 1 | 
-  #     feeding_type_12m___1 == 1 | 
-  #     feeding_type_18m___1 == 1,
-  #     1, 0
-  #   ),
-  #   feed_formula = if_else(
-  #     feeding_type_3m == 2 | 
-  #     feeding_type_6m == 2 | 
-  #     feeding_type_12m___2 == 1 | 
-  #     feeding_type_18m___2 == 1,
-  #     1, 0
-  #   ),
-  #   feed_mixed = if_else(
-  #     feeding_type_3m == 3 | 
-  #     feeding_type_6m == 3,
-  #     1, 0
-  #   ),
-  #   feed_solid = if_else(
-  #     feeding_type_12m___3 == 1 | 
-  #     feeding_type_18m___3 == 1,
-  #     1, 0
-  #   )
-  # )%>%
-  # mutate(
-  #   feed_type = case_when(
-  #     feed_breast == 1 ~ "Breast",
-  #     feed_formula == 1 ~ "Formula",
-  #     feed_mixed == 1 ~ "Mixed",
-  #     feed_solid == 1 ~ "Solid",
-  #     TRUE ~ "None"
-  #   )
-  # )%>%
-  # mutate(
-  #   feed_type = factor(feed_type, ordered = FALSE, levels = c("Breast", "Formula", "Mixed", "Solid"), labels = c("Breast", "Formula", "Mixed", "Solid"))
-  # )%>%
-  
 
 
 ##-----mom education
@@ -125,6 +117,21 @@ print(paste0("Maternal education MAX: ", edu_max))
 
 table(metadata$mom_edu_en) #mom edu level
 
+metadata_POS <- processed_metadata %>%
+  filter(mom_hiv_status == "Positive") 
+
+metadata_NEG <- processed_metadata %>%
+  filter(mom_hiv_status == "Negative")
+
+edu_metadata_POS <- metadata_POS$mat_edu_years
+summary(edu_metadata_POS)
+sd_edu_metadata_POS = sd(edu_metadata_POS)
+sd_edu_metadata_POS
+
+edu_metadata_NEG <- metadata_NEG$mat_edu_years
+summary(edu_metadata_NEG)
+sd_edu_metadata_NEG = sd(edu_metadata_NEG)
+sd_edu_metadata_NEG
 
 
 ##-----birth weight (grams)
@@ -200,7 +207,6 @@ p <- ggplot(plot_df, aes(y = proportion, fill = child_sex)) +
 print(p)
 
 
-
 ##-----delivery type
 #table
 table(metadata$delivery_6m)
@@ -234,6 +240,7 @@ p <- ggplot(plot_df, aes(y = proportion, fill = delivery_mode)) +
   theme(plot.title = element_text(hjust = 0.5))
 
 print(p) 
+
 
 
 
@@ -298,6 +305,16 @@ print(gwWeeks_median)
 print(gwWeeks_max)
 print(gwWeeks_min)
 
+gestw_metadata_POS <- metadata_POS$gest_weeks
+summary(gestw_metadata_POS)
+sd_gestw_metadata_POS = sd(gestw_metadata_POS, na.rm = TRUE)
+sd_gestw_metadata_POS
+
+gestw_metadata_NEG <- metadata_NEG$gest_weeks
+summary(gestw_metadata_NEG)
+sd_gestw_metadata_NEG = sd(gestw_metadata_NEG, na.rm = TRUE)
+sd_gestw_metadata_NEG
+
 
 #-----heatmap/barcode plot
 
@@ -357,6 +374,135 @@ p_18mfeed <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = feed_1
   theme_void() +
   labs(title = "Feeding Types 18m")
 
+
+#plot for positive maternal HIV
+
+#sort by hiv and then sort by feed type
+pos_metadata_feed3m <- processed_metadata %>%
+  filter(mom_hiv_status == "Positive") %>%
+  arrange(feed_3m) %>%
+  mutate(master_idx = row_number())
+
+pos_metadata_feed6m <- processed_metadata %>%
+  filter(mom_hiv_status == "Positive") %>%
+  arrange(feed_6m) %>%
+  mutate(master_idx = row_number())
+
+pos_metadata_feed12m <- processed_metadata %>%
+  filter(mom_hiv_status == "Positive") %>%
+  arrange(feed_12m) %>%
+  mutate(master_idx = row_number())
+
+pos_metadata_feed18m <- processed_metadata %>%
+  filter(mom_hiv_status == "Positive") %>%
+  arrange(feed_18m) %>%
+  mutate(master_idx = row_number())
+  
+p_feed3mPOS <- ggplot(pos_metadata_feed3m, 
+       aes(x = master_idx, y = 1, fill = feed_3m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet", "N/A" = "gray80")) +
+  theme_void() +
+  labs(title = "Feeding Types 3m Positive HIV")
+
+p_feed6mPOS <- ggplot(pos_metadata_feed6m, 
+       aes(x = master_idx, y = 1, fill = feed_6m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet", "N/A" = "gray80")) +
+  theme_void() +
+  labs(title = "Feeding Types 6m Positive HIV")
+
+p_feed12mPOS <- ggplot(pos_metadata_feed12m, 
+       aes(x = master_idx, y = 1, fill = feed_12m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan", "N/A" = "gray80")) +
+  theme_void() +
+  labs(title = "Feeding Types 12m Positive HIV")
+  
+p_feed18mPOS <- ggplot(pos_metadata_feed18m, 
+       aes(x = master_idx, y = 1, fill = feed_18m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan", "N/A" = "gray80")) +
+  theme_void() +
+  labs(title = "Feeding Types 18m Positive HIV")
+
+
+#plot for negative maternal HIV
+neg_metadata_feed3m <- processed_metadata %>%
+  filter(mom_hiv_status == "Negative") %>%
+  arrange(feed_3m) %>%
+  mutate(master_idx = row_number())
+
+neg_metadata_feed6m <- processed_metadata %>%
+  filter(mom_hiv_status == "Negative") %>%
+  arrange(feed_6m) %>%
+  mutate(master_idx = row_number())
+
+neg_metadata_feed12m <- processed_metadata %>%
+  filter(mom_hiv_status == "Negative") %>%
+  arrange(feed_12m) %>%
+  mutate(master_idx = row_number())
+
+neg_metadata_feed18m <- processed_metadata %>%
+  filter(mom_hiv_status == "Negative") %>%
+  arrange(feed_18m) %>%
+  mutate(master_idx = row_number())
+
+p_feed3mNEG <- ggplot(neg_metadata_feed3m, 
+                      aes(x = master_idx, y = 1, fill = feed_3m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet", "N/A" = "gray80")) +
+  theme_void() +
+  labs(title = "Feeding Types 3m Negative HIV")
+
+p_feed6mNEG <- ggplot(neg_metadata_feed6m, 
+                      aes(x = master_idx, y = 1, fill = feed_6m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet", "N/A" = "gray80")) +
+  theme_void() +
+  labs(title = "Feeding Types 6m Negative HIV")
+
+p_feed12mNEG <- ggplot(neg_metadata_feed12m, 
+                       aes(x = master_idx, y = 1, fill = feed_12m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan", "N/A" = "gray80")) +
+  theme_void() +
+  labs(title = "Feeding Types 12m Negative HIV")
+
+p_feed18mNEG <- ggplot(neg_metadata_feed18m, 
+                       aes(x = master_idx, y = 1, fill = feed_18m)) +
+  geom_tile(height = 1) +
+  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan", "N/A" = "gray80")) +
+  theme_void() +
+  labs(title = "Feeding Types 18m Negative HIV")
+
+
+#aaaaa
+# 
+# data_gaKnown = dplyr::filter(metadata, ga_known == 1)
+# 
+# gest_vector = data_gaKnown$ga_weeks
+# gest_vector = gest_vector[!is.na(gest_vector)]
+# 
+# sorted_gest = sort(gest_vector)
+# 
+# dfgest = data.frame(Weeks = sorted_gest)
+# dfgest$id = seq_along(dfgest$Weeks) 
+# 
+# 
+# ggplot(dfgest, aes(x = id, y = 1, fill = Weeks)) +
+#   geom_raster() + scale_fill_gradient(colours = c("red", "darkorange", "orange", "yellow", "lightgreen", "green"), name = "Weeks") + 
+#   theme_minimal() +
+#   theme(
+#     axis.title = element_blank(),
+#     axis.text = element_blank(),
+#     axis.ticks = element_blank(),
+#     panel.grid = element_blank()
+#   ) +
+#   labs(title = "Gestational Weeks")
+
+grid.arrange(p_feed3mPOS,p_feed3mNEG, p_feed6mPOS,p_feed6mNEG, 
+             p_feed12mPOS,p_feed12mNEG, p_feed18mPOS,p_feed18mNEG, nrow = 8)
 
 grid.arrange(p_hiv, p_mat_edu, p_delivery, p_sex, p_gest_weeks, nrow = 5)
 
