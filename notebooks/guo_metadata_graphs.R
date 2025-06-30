@@ -51,8 +51,8 @@ processed_metadata <- metadata %>%
   mutate(feeding_3m = factor(feeding_3m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
   mutate(feeding_6m = factor(feeding_6m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
   mutate(
-    feeding_12m = if_else(feeding_type_12m___3 == 1, "Solid",
-               if_else(feeding_type_12m___1 == 1, "Breast",
+   feeding_12m = if_else(feeding_type_12m___3 == 1, "Solid",
+               if_else(feeding_type_12m___1 == 1, "B reast",
                if_else(feeding_type_12m___2 == 1, "Formula", "N/A"))),
     #feeding_12m = ifelse(is.na(feeding_12m), "N/A", feeding_12m),
     feeding_12m = factor(feeding_12m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
@@ -65,53 +65,6 @@ processed_metadata <- metadata %>%
     feeding_18m = factor(feeding_18m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
   )%>%
   mutate( . , master_idx = 1:nrow(.))
-
-
-
-
-
-
-
-# mutate(
-#   feed_breast = if_else(
-#            feeding_type_3m == 1 |
-#            feeding_type_6m == 1 |
-#            feeding_type_12m___1 == 1 |
-#            feeding_type_18m___1 == 1,
-#            1, 0
-#          ),
-#          feed_formula = if_else(
-#            feeding_type_3m == 2 |
-#            feeding_type_6m == 2 |
-#            feeding_type_12m___2 == 1 |
-#            feeding_type_18m___2 == 1,
-#            1, 0
-#          ),
-#          feed_mixed = if_else(
-#            feeding_type_3m == 3 |
-#            feeding_type_6m == 3,
-#            1, 0
-#          ),
-#          feed_solid = if_else(
-#            feeding_type_12m___3 == 1 |
-#            feeding_type_18m___3 == 1,
-#            1, 0
-#          )
-#        )%>%
-#        mutate(
-#          feed_type = case_when(
-#            feed_breast == 1 ~ "Breast",
-#            feed_formula == 1 ~ "Formula",
-#            feed_mixed == 1 ~ "Mixed",
-#            feed_solid == 1 ~ "Solid",
-#            TRUE ~ "None"
-#          )
-#        )%>%
-#        mutate(
-#          feed_type = factor(feed_type, ordered = FALSE, levels = c("Breast", "Formula", "Mixed", "Solid"), labels = c("Breast", "Formula", "Mixed", "Solid"))
-#        )%>%
-  
-
 
 
 
@@ -145,6 +98,7 @@ edu_metadata_NEG <- metadata_NEG$mat_edu_years
 summary(edu_metadata_NEG)
 sd_edu_metadata_NEG = sd(edu_metadata_NEG)
 sd_edu_metadata_NEG
+
 
 
 ##-----birth weight (grams)
@@ -563,4 +517,26 @@ grid.arrange(p_feed3mPOS,p_feed3mNEG, p_feed6mPOS,p_feed6mNEG,
 grid.arrange(p_hiv, p_mat_edu, p_delivery, p_sex, p_gest_weeks, nrow = 5)
 
 grid.arrange(p_hiv, p_3mfeed, p_6mfeed, p_12mfeed, p_18mfeed, nrow = 5)
+
+
+##-----Data cleaning... again!
+
+#check if has zymo code --true--> remove
+
+naonly_metadata <- metadata %>%
+  select(
+    "subject_id",
+    "zymo_code_3m",
+    "zymo_code_6m",
+    "zymo_code_12m",
+    "zymo_code_18m",
+    "zymo_code_24m"
+  )%>%
+  filter(zymo_code_3m == "") %>%
+  filter(zymo_code_6m == "") %>%
+  filter(zymo_code_12m == "") %>%
+  filter(zymo_code_18m == "") %>%
+  filter(zymo_code_24m == "")
+  
+#write.csv(naonly_metadata, (fs::path(here::here(), "ext", "na-zymo_only_2025-03-07-KhulaSA_ClinicalMdata.csv")), row.names = TRUE)
 
