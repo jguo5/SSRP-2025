@@ -17,9 +17,65 @@ attach(metadata)
 head(metadata, 3)
 
 ##-----Processing the Metadata
+# 
+# processed_metadata <- metadata %>%
+#   select(
+#     "subject_id",
+#     "child_sex",
+#     "delivery_6m",
+#     "medhx_mom___1_selfreport",
+#     "mat_edu_years",
+#     "ga_weeks",
+#     
+#     "feeding_type_3m",
+#     "feeding_type_6m",
+#     "feeding_type_12m___1",
+#     "feeding_type_12m___2",
+#     "feeding_type_12m___3",
+#     "feeding_type_18m___1",
+#     "feeding_type_18m___2",
+#     "feeding_type_18m___3"
+#   ) %>%
+#   rename(
+#     delivery_mode = delivery_6m,
+#     mom_hiv_status = medhx_mom___1_selfreport,
+#     gest_weeks = ga_weeks,
+#     feeding_3m = feeding_type_3m,
+#     feeding_6m = feeding_type_6m,
+#     
+#   ) %>%
+#   mutate(child_sex = factor(child_sex, ordered = FALSE, levels = c(0,1), labels = c("F", "M"))) %>%
+#   mutate(delivery_mode = factor(delivery_mode, ordered = FALSE, levels = c(0, 1), labels = c("Vaginal", "Cesarean"))) %>%
+#   mutate(mom_hiv_status = factor(mom_hiv_status, ordered = FALSE, levels = c(0, 1), labels = c("Negative", "Positive"))) %>%
+#   arrange(mom_hiv_status) %>%
+#   mutate(feeding_3m = factor(feeding_3m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
+#   mutate(feeding_6m = factor(feeding_6m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
+#   mutate(
+#    feeding_12m = if_else(feeding_type_12m___3 == 1, "Solid",
+#                if_else(feeding_type_12m___1 == 1, "B reast",
+#                if_else(feeding_type_12m___2 == 1, "Formula", "N/A"))),
+#     #feeding_12m = ifelse(is.na(feeding_12m), "N/A", feeding_12m),
+#     feeding_12m = factor(feeding_12m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
+#   ) %>%
+#   mutate(
+#     feeding_18m = if_else(feeding_type_18m___3 == 1, "Solid",
+#                if_else(feeding_type_18m___1 == 1, "Breast",
+#                if_else(feeding_type_18m___2 == 1, "Formula", "N/A"))),
+#     #feeding_18m = ifelse(is.na(feeding_18m), "N/A", feeding_18m),
+#     feeding_18m = factor(feeding_18m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
+#   )%>%
+#   mutate( . , master_idx = 1:nrow(.))
+
 
 processed_metadata <- metadata %>%
   select(
+    "subject_id",
+    "zymo_code_3m",
+    "zymo_code_6m",
+    "zymo_code_12m",
+    "zymo_code_18m",
+    "zymo_code_24m",
+    
     "subject_id",
     "child_sex",
     "delivery_6m",
@@ -35,7 +91,14 @@ processed_metadata <- metadata %>%
     "feeding_type_18m___1",
     "feeding_type_18m___2",
     "feeding_type_18m___3"
-  ) %>%
+  )%>%
+  filter(
+    !(zymo_code_3m == "" &
+        zymo_code_6m == "" &
+        zymo_code_12m == "" &
+        zymo_code_18m == "" &
+        zymo_code_24m == "")
+  )%>%
   rename(
     delivery_mode = delivery_6m,
     mom_hiv_status = medhx_mom___1_selfreport,
@@ -51,16 +114,16 @@ processed_metadata <- metadata %>%
   mutate(feeding_3m = factor(feeding_3m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
   mutate(feeding_6m = factor(feeding_6m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
   mutate(
-   feeding_12m = if_else(feeding_type_12m___3 == 1, "Solid",
-               if_else(feeding_type_12m___1 == 1, "B reast",
-               if_else(feeding_type_12m___2 == 1, "Formula", "N/A"))),
+    feeding_12m = if_else(feeding_type_12m___3 == 1, "Solid",
+                          if_else(feeding_type_12m___1 == 1, "B reast",
+                                  if_else(feeding_type_12m___2 == 1, "Formula", "N/A"))),
     #feeding_12m = ifelse(is.na(feeding_12m), "N/A", feeding_12m),
     feeding_12m = factor(feeding_12m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
   ) %>%
   mutate(
     feeding_18m = if_else(feeding_type_18m___3 == 1, "Solid",
-               if_else(feeding_type_18m___1 == 1, "Breast",
-               if_else(feeding_type_18m___2 == 1, "Formula", "N/A"))),
+                          if_else(feeding_type_18m___1 == 1, "Breast",
+                                  if_else(feeding_type_18m___2 == 1, "Formula", "N/A"))),
     #feeding_18m = ifelse(is.na(feeding_18m), "N/A", feeding_18m),
     feeding_18m = factor(feeding_18m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
   )%>%
@@ -122,25 +185,31 @@ print(paste0("Birth weight MAX: ", bw_max))
 arv_baby <- table(metadata$baby_arv_selfreport)
 print(arv_baby)
 arv_df <- as.data.frame(arv_baby)
+print("Child ARV Table: ")
 print(arv_df)
 #mom
 arv_mom <- table(metadata$mom_arv_selfreport)
 print(arv_mom)
 arv_dfm <- as.data.frame(arv_mom)
+print("Maternal ARV Table: ")
 print(arv_dfm)
 
 
 
 ##-----HIV status
 #baby
-table(metadata$baby_hiv_selfreport)
+hiv_baby <- table(metadata$baby_hiv_selfreport)
+print("Child HIV Table: ")
+print(hiv_baby)
 #mom
+print("Maternal HIV Table: ")
 table(metadata$hiv_mom_diagnosed_selfreport)
 
 
 
 ##-----child sex
 #table
+print("Child Sex Table: ")
 table(metadata$child_sex)
 
 #pie chart
@@ -306,14 +375,14 @@ data_gaKnown <- dplyr::filter(metadataGAKnown, ga_known == 1)
 gwWeeks_mean <- mean(data_gaKnown$ga_weeks, na.rm = TRUE)
 gwWeeks_sd <- sd(data_gaKnown$ga_weeks, na.rm = TRUE)
 gwWeeks_median <- median(data_gaKnown$ga_weeks, na.rm = TRUE)
-gwWeeks_max <- max (data_gaKnown$ga_weeks, na.rm = TRUE)
 gwWeeks_min <- min (data_gaKnown$ga_weeks, na.rm = TRUE)
+gwWeeks_max <- max (data_gaKnown$ga_weeks, na.rm = TRUE)
 
-print(gwWeeks_mean)
-print(gwWeeks_sd)
-print(gwWeeks_median)
-print(gwWeeks_max)
-print(gwWeeks_min)
+print(paste0("Gestational mean: ", gwWeeks_mean))
+print(paste0("Gestational sd: ", gwWeeks_sd))
+print(paste0("Gestational median:", gwWeeks_median))
+print(paste0("Gestational min:", gwWeeks_min))
+print(paste0("Gestational max:", gwWeeks_max))
 
 gestw_metadata_POS <- metadata_POS$gest_weeks
 summary(gestw_metadata_POS)
