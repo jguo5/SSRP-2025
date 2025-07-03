@@ -10,6 +10,7 @@ library(tidyverse)
 library(gridExtra)
 library(fs)
 library(here)
+library(patchwork)
 set.seed(1234)
 
 metadata <- read.csv(fs::path(here::here(), "ext", "2025-03-07-KhulaSA_ClinicalMdata.csv"), header=TRUE)
@@ -580,12 +581,30 @@ p_feed18mNEG <- ggplot(neg_metadata_feed18m,
 #   ) +
 #   labs(title = "Gestational Weeks")
 
-grid.arrange(p_feed3mPOS,p_feed3mNEG, p_feed6mPOS,p_feed6mNEG, 
-             p_feed12mPOS,p_feed12mNEG, p_feed18mPOS,p_feed18mNEG, nrow = 8)
+(p_feed3mPOS /
+    p_feed3mNEG /
+    p_feed6mPOS /
+    p_feed6mNEG /
+    p_feed12mPOS /
+    p_feed12mNEG /
+    p_feed18mPOS /
+    p_feed18mNEG
+) + plot_layout(heights = rep(1, 8))
 
-grid.arrange(p_hiv, p_mat_edu, p_delivery, p_sex, p_gest_weeks, nrow = 5)
+(p_hiv/
+    p_mat_edu/
+    p_delivery/
+    p_sex/
+    p_gest_weeks
+) + plot_layout(heights = rep(1, 5))
 
-grid.arrange(p_hiv, p_3mfeed, p_6mfeed, p_12mfeed, p_18mfeed, nrow = 5)
+(p_hiv/
+    p_3mfeed/
+    p_6mfeed/
+    p_12mfeed/
+    p_18mfeed
+) + plot_layout(heights = rep(1, 5))
+
 
 
 ##-----Data cleaning... again!
