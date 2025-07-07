@@ -174,7 +174,6 @@ grid.arrange (p_shannon, p_richness, ncol = 2)
 #   filter(zymo_code_18m == "") %>%
 #   filter(zymo_code_24m == "")
 
-#remove naonly_metadata$subject_id from microbe_maxdata
 df_micro_count <- df_micro_count %>% arrange(desc(num_subjects))
 top5_names <- head(rownames(df_micro_count), 5)
 
@@ -238,37 +237,68 @@ ggplot(pie_data, aes(x = "", y = prevalence, fill = max_microbe)) +
   labs(title = "Microbe Prevalence Pie Chart")
 
 
-#--PCoA Plot
+#-----PCoA Plot
+# --Plot by HIV status
+# distance_matrix <- vegdist(microbe_only_data, method = "bray") #lots of 0's, should i remove?
+# pcoa_result <- cmdscale(distance_matrix, k = 2)
+# 
+# pcoa_df <- as.data.frame(pcoa_result)
+# 
+# pcoa_df <- pcoa_df %>%
+#   rename(PCoA1 = V1, PCoA2 = V2)
+# 
+# 
+# pcoa_df$subject_id <- processed_micro$subject_id
+# meta_subset <- processed_metadata %>% select(subject_id, mom_hiv_status)
+# pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id")
+# pcoa_df <- pcoa_df %>%
+#   arrange(mom_hiv_status)%>%
+#   filter(!is.na(mom_hiv_status))
+# 
+# ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = mom_hiv_status)) +
+#   geom_point(size = 3, alpha = 0.8) +
+#   theme_minimal() +
+#   labs(
+#     title = "Microbiome PCoA Plot",
+#     x = "PCoA1",
+#     y = "PCoA2",
+#     color = "Mom HIV Status"
+#   ) +
+#   theme(plot.title = element_text(hjust = 0.5))
 
-distance_matrix <- vegdist(microbe_only_data, method = "bray") #lots of 0's, should i remove?
+
+#--Plot by top 5 microbes
+microbe_only_data <- microbe_only_data[rowSums(microbe_only_data) > 0, ]
+distance_matrix <- vegdist(microbe_only_data, method = "bray")
 pcoa_result <- cmdscale(distance_matrix, k = 2)
 
 pcoa_df <- as.data.frame(pcoa_result)
 
 pcoa_df <- pcoa_df %>%
-  rename(PCoA1 = V1, PCoA2 = V2)
-
+   rename(PCoA1 = V1, PCoA2 = V2)
 
 pcoa_df$subject_id <- processed_micro$subject_id
 meta_subset <- processed_metadata %>% select(subject_id, mom_hiv_status)
 pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id")
 pcoa_df <- pcoa_df %>%
-  arrange(mom_hiv_status)%>%
-  filter(!is.na(mom_hiv_status))
+  arrange(mom_hiv_status)
 
-ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = mom_hiv_status)) +
+
+top5_microbe_table <- colnames(microbe_only_data)[apply(microbe_only_data, 1, which.max)]
+top5_microbe_name <- names(sort(table(top5_microbe_table), decreasing = TRUE))[1:5]
+
+pcoa_df$top5_microbe_table <- ifelse(top5_microbe_table %in% top5_microbe_name, top5_microbe_table, "Other")
+pcoa_df$top5_microbe_table <- factor(pcoa_df$top5_microbe_table, levels = c(top5_microbe_name, "Other"))
+
+ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = dominant_microbe)) +
   geom_point(size = 3, alpha = 0.8) +
   theme_minimal() +
+  scale_color_viridis_d(option = "plasma") +
   labs(
-    title = "Microbiome PCoA Plot",
+    title = "PCoA Colored by Microbe",
     x = "PCoA1",
     y = "PCoA2",
-    color = "Mom HIV Status"
+    color = "Microbes"
   ) +
   theme(plot.title = element_text(hjust = 0.5))
-
-
-
-
-
 
