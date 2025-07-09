@@ -219,7 +219,7 @@ table(metadata$child_sex)
 plot_df <- processed_metadata %>%
   group_by(child_sex) %>%
   summarise(N = n()) %>%
-  na.omit() %>%     #omit na values (65...)
+  #na.omit() %>%     #omit na values (65...)
   mutate(
     proportion = N / sum(N), #from plot_df$proportion <- plot_df$N  / sum(plot_df$N)
     ) %>%
@@ -238,6 +238,7 @@ p <- ggplot(plot_df, aes(y = proportion, fill = child_sex)) +
     size = 4,
     color = "black") +
   theme_void() +
+  scale_fill_manual(values = c(F = "orange", M = "lightblue")) +
   labs(title = "Child Sex", fill = "Sex") +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -254,7 +255,7 @@ table(metadata$delivery_6m)
 plot_df <- processed_metadata %>%
   group_by(delivery_mode) %>%
   summarise(N = n()) %>%
-  na.omit() %>%     #omit na values (65...)
+  #na.omit() %>%     #omit na values (65...)
   mutate(
     proportion = N / sum(N), #from plot_df$proportion <- plot_df$N  / sum(plot_df$N)
   ) %>%
@@ -273,6 +274,7 @@ p <- ggplot(plot_df, aes(y = proportion, fill = delivery_mode)) +
     size = 4,
     color = "black") +
   theme_void() +
+  scale_fill_manual(values = c("Vaginal" = "#9df373", "Cesarean" = "#c1acf5")) +
   labs(title = "Delivery Mode", fill = "Mode") +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -398,62 +400,49 @@ sd_gestw_metadata_NEG
 
 #-----heatmap/barcode plot
 
-p_hiv <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = mom_hiv_status)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Negative" = "blue", "Positive" = "red")) +
-  theme_void() +
-  labs(title = "Maternal HIV")
+func_barcode <- function(data, x, fill, scale_fill, title) {
+  ggplot(data, aes(x = {{x}}, fill = {{fill}})) +
+    geom_tile(aes(y = 1), height = 1) + 
+    {{scale_fill}} +
+    theme_void() +
+    labs(title = title)
+}
 
-p_mat_edu <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = mat_edu_years)) +
-  geom_tile(height = 1) +
-  theme_void() +
-  scale_fill_viridis_c() +
-  labs(title = "Maternal Education (years)")
+p_hiv <- func_barcode(processed_metadata, master_idx, mom_hiv_status, 
+                      scale_fill_manual(values = c("Negative" = "#73baf3", "Positive" = "#f37373")),
+                      "Maternal HIV Status")
 
-p_gest_weeks <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = gest_weeks)) +
-  geom_tile(height = 1) +
-  theme_void() +
-  scale_fill_viridis_c() +
-  labs(title = "Gestational Time (weeks)")
+p_mat_edu <- func_barcode(processed_metadata, master_idx, mat_edu_years, 
+                          scale_fill_viridis_c(option = "rocket"), "Maternal Education (years)")
 
-p_delivery <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = delivery_mode)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Vaginal" = "darkgreen", "Cesarean" = "lightyellow")) +
-  theme_void() +
-  labs(title = "Delivery Mode")
+p_gest_weeks <- func_barcode(processed_metadata, master_idx, gest_weeks, 
+                             scale_fill_viridis_c(), "Gestational Time (weeks)")
 
-p_sex <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = child_sex)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("F" = "orange", "M" = "lightblue")) +
-  theme_void() +
-  labs(title = "Child Sex")
+p_delivery <- func_barcode(processed_metadata, master_idx, delivery_mode, 
+                           scale_fill_manual(values = c("Vaginal" = "#9df373", "Cesarean" = "#c1acf5")),
+                           "Delivery Mode")
+
+p_sex <- func_barcode(processed_metadata, master_idx, child_sex, 
+                           scale_fill_manual(values = c("F" = "orange", "M" = "lightblue")),
+                           "Child Sex")
+
 
 #add for feeding, diff colors for breast, formula, other
+p_3mfeed <- func_barcode(processed_metadata, master_idx, feeding_3m, 
+                         scale_fill_manual(values = c("Breast"="pink", "Formula"="brown", 
+                         "Mixed"="violet", "N/A"="gray")), "Feeding Types 3m")
 
-p_3mfeed <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = feeding_3m)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet", "N/A" = "gray")) +
-  theme_void() +
-  labs(title = "Feeding Types 3m")
+p_6mfeed <- func_barcode(processed_metadata, master_idx, feeding_6m, 
+                         scale_fill_manual(values = c("Breast"="pink", "Formula"="brown", 
+                         "Mixed"="violet", "N/A"="gray")), "Feeding Types 6m")
 
-p_6mfeed <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = feeding_6m)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet", "N/A" = "gray")) +
-  theme_void() +
-  labs(title = "Feeding Types 6m")
+p_12mfeed <- func_barcode(processed_metadata, master_idx, feeding_12m, 
+                          scale_fill_manual(values = c("Breast"="pink", "Formula"="brown", 
+                          "Solid"="cyan", "N/A"="gray"), drop=FALSE), "Feeding Types 12m")
 
-p_12mfeed <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = feeding_12m)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan", "N/A" = "gray"), drop = FALSE) +
-  theme_void() +
-  labs(title = "Feeding Types 12m")
-
-p_18mfeed <- ggplot(processed_metadata, aes(x = master_idx, y = 1, fill = feeding_18m)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan", "N/A" = "gray"), drop = FALSE) +
-  theme_void() +
-  labs(title = "Feeding Types 18m")
-
+p_18mfeed <- func_barcode(processed_metadata, master_idx, feeding_18m, 
+                          scale_fill_manual(values = c("Breast"="pink", "Formula"="brown", 
+                          "Solid"="cyan", "N/A"="gray"), drop=FALSE), "Feeding Types 18m")
 
 #plot for positive maternal HIV
 
@@ -478,33 +467,25 @@ pos_metadata_feed18m <- processed_metadata %>%
   arrange(feeding_18m) %>%
   mutate(master_idx = row_number())
   
-p_feed3mPOS <- ggplot(pos_metadata_feed3m, 
-       aes(x = master_idx, y = 1, fill = feeding_3m)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet", "N/A" = "gray")) +
-  theme_void() +
-  labs(title = "Feeding Types 3m Positive HIV")
+p_feed3mPOS <- func_barcode(pos_metadata_feed3m, master_idx, feeding_3m, 
+                            scale_fill_manual(values = c("Breast"="pink", 
+                            "Formula"="brown", "Mixed"="violet", "N/A"="gray")), 
+                            "Feeding Types 3m Positive HIV")
 
-p_feed6mPOS <- ggplot(pos_metadata_feed6m, 
-       aes(x = master_idx, y = 1, fill = feeding_6m)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Mixed" = "violet", "N/A" = "gray")) +
-  theme_void() +
-  labs(title = "Feeding Types 6m Positive HIV")
+p_feed6mPOS <- func_barcode(pos_metadata_feed6m, master_idx, feeding_6m, 
+                            scale_fill_manual(values = c("Breast"="pink", 
+                            "Formula"="brown", "Mixed"="violet", "N/A"="gray")), 
+                            "Feeding Types 6m Positive HIV")
 
-p_feed12mPOS <- ggplot(pos_metadata_feed12m, 
-       aes(x = master_idx, y = 1, fill = feeding_12m)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan", "N/A" = "gray")) +
-  theme_void() +
-  labs(title = "Feeding Types 12m Positive HIV")
-  
-p_feed18mPOS <- ggplot(pos_metadata_feed18m, 
-       aes(x = master_idx, y = 1, fill = feeding_18m)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Breast" = "pink", "Formula" = "brown", "Solid" = "cyan", "N/A" = "gray")) +
-  theme_void() +
-  labs(title = "Feeding Types 18m Positive HIV")
+p_feed12mPOS <- func_barcode(pos_metadata_feed12m, master_idx, feeding_12m, 
+                             scale_fill_manual(values = c("Breast"="pink", 
+                             "Formula"="brown", "Solid"="cyan", "N/A"="gray")), 
+                             "Feeding Types 12m Positive HIV")
+
+p_feed18mPOS <- func_barcode(pos_metadata_feed18m, master_idx, feeding_18m, 
+                             scale_fill_manual(values = c("Breast"="pink", 
+                             "Formula"="brown", "Solid"="cyan", "N/A"="gray")), 
+                             "Feeding Types 18m Positive HIV")
 
 
 #plot for negative maternal HIV
