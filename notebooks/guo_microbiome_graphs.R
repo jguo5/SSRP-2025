@@ -28,7 +28,7 @@ processed_micro <- microdata %>%
     -datacolor,
     -visit,
     -westernized_cat, 
-    -ageMonths,
+    #-ageMonths,
     -sample  #should we do sample number or subject ID
   )%>%
   mutate(
@@ -155,6 +155,61 @@ p_richness <- ggplot(microdata, aes(x = ageMonths, y = species_richness)) +
 grid.arrange (p_shannon, p_richness, ncol = 2)
 
 
+#-- separated HIV status
+scatter_data <- microdata %>%
+  select(subject_id, (all_of(c("ageMonths", "shannon_div", "species_richness")))) %>% 
+  mutate(
+    subject_id = gsub("khula-", "", subject_id)
+  )
+
+scatter_data <- scatter_data %>%
+  left_join(
+    processed_metadata %>% select(subject_id, mom_hiv_status),
+    by = "subject_id"
+  )
+
+scatterdata_POS <- scatter_data %>% filter(mom_hiv_status == "Positive")
+scatterdata_NEG <- scatter_data %>% filter(mom_hiv_status == "Negative")
+
+p_shannon_scatter_POS <- ggplot(scatterdata_POS, aes(x = ageMonths, y = shannon_div)) +
+  geom_point(size = 1, shape = 1) +
+  geom_smooth(method = 'lm', colour = "#f37373", linewidth = 0.5, se = TRUE) +
+  theme_minimal() +
+  xlab("Age (Months)") +
+  ylab("Shannon Diversity") +
+  labs(title = "Shannon Diversity HIV Positive")
+
+p_shannon_scatter_NEG <- ggplot(scatterdata_NEG, aes(x = ageMonths, y = shannon_div)) +
+  geom_point(size = 1, shape = 1) +
+  geom_smooth(method = 'lm', colour = "#73baf3", linewidth = 0.5, se = TRUE) +
+  theme_minimal() +
+  xlab("Age (Months)") +
+  ylab("Shannon Diversity") +
+  labs(title = "Shannon Diversity HIV Negative")
+
+
+p_rich_scatter_POS <- ggplot(scatterdata_POS, aes(x = ageMonths, y = species_richness)) +
+  geom_point(size = 1, shape = 1) +
+  geom_smooth(method = 'lm', colour = "#f37373", linewidth = 0.5, se = TRUE) +
+  theme_minimal() +
+  xlab("Age (Months)") +
+  ylab("Species Richness") +
+  labs(title = "Species Richness HIV Positive")
+
+p_rich_scatter_NEG <- ggplot(scatterdata_NEG, aes(x = ageMonths, y = species_richness)) +
+  geom_point(size = 1, shape = 1) +
+  geom_smooth(method = 'lm', colour = "#73baf3", linewidth = 0.5, se = TRUE) +
+  theme_minimal() +
+  xlab("Age (Months)") +
+  ylab("Species Richness") +
+  labs(title = "Species Richness HIV Negative")
+
+(p_shannon_scatter_POS / 
+  p_shannon_scatter_NEG / 
+  p_rich_scatter_POS / 
+  p_rich_scatter_NEG
+  ) + plot_layout (ncol = 2)
+
 
 #-----Barcode Plots
 
@@ -174,9 +229,13 @@ grid.arrange (p_shannon, p_richness, ncol = 2)
 #   filter(zymo_code_18m == "") %>%
 #   filter(zymo_code_24m == "")
 
-df_micro_count <- df_micro_count %>% arrange(desc(num_subjects))
-top5_names <- head(rownames(df_micro_count), 5)
+#df_micro_count <- df_micro_count %>% arrange(desc(num_subjects))
+#top5_names <- head(rownames(df_micro_count), 8)
 
+max_counts <- data.frame(table(microbe_maxdata$microbe_name))
+max_counts <- max_counts %>% arrange(desc(Freq))
+top5_names <- head((max_counts$Var1), 8)
+  
 meta_subset <- processed_metadata %>% select(subject_id, mom_hiv_status)
 
 subject_order <- meta_subset %>%
@@ -202,31 +261,77 @@ microbe_maxdata <- microbe_maxdata %>%
 
 
 #--barcode graphs
-p_hiv <- ggplot(meta_subset, aes(x = subject_id, y = 1, fill = mom_hiv_status)) +
-  geom_tile(height = 1) +
-  scale_fill_manual(values = c("Negative" = "blue", "Positive" = "red")) +
-  theme_void() +
-  labs(title = "Maternal HIV")
+func_barcode <- function(data, x, fill, scale_fill, title) {
+  ggplot(data, aes(x = {{x}}, fill = {{fill}})) +
+    geom_tile(aes(y = 1), height = 1) + 
+    {{scale_fill}} +
+    theme_void() +
+    labs(title = title)
+}
+
+p_hiv <- func_barcode(processed_metadata, master_idx, mom_hiv_status, 
+                      scale_fill_manual(values = c("Negative" = "#73baf3", "Positive" = "#f37373")),
+                      "Maternal HIV Status")
+
+p_mat_edu <- func_barcode(processed_metadata, master_idx, mat_edu_years, 
+                          scale_fill_viridis_c(option = "rocket"), "Maternal Education (years)")
+
+p_gest_weeks <- func_barcode(processed_metadata, master_idx, gest_weeks, 
+                             scale_fill_viridis_c(), "Gestational Time (weeks)")
+
+p_delivery <- func_barcode(processed_metadata, master_idx, delivery_mode, 
+                           scale_fill_manual(values = c("Vaginal" = "#9df373", "Cesarean" = "#c1acf5")),
+                           "Delivery Mode")
+
+p_sex <- func_barcode(processed_metadata, master_idx, child_sex, 
+                      scale_fill_manual(values = c("F" = "orange", "M" = "lightblue")),
+                      "Child Sex")
+
 
 p_microbes <- ggplot(microbe_maxdata, aes(x = subject_id, y = 1, fill = max_microbe)) +
     geom_tile(height = 1) +
-    scale_fill_viridis_d() +
+    scale_fill_manual(values = c(
+      Escherichia_coli = "#0D0887",
+      Bifidobacterium_bifidum = "#41049D",
+      Ruminococcus_gnavus = "#6A00A8",
+      Bifidobacterium_kashiwanohense = "#8F0DA4",
+      Bifidobacterium_pseudocatenulatum = "#B12A90",
+      Bifidobacterium_breve = "#D6436E",
+      Prevotella_copri = "#E86042",
+      Bifidobacterium_longum = "#F78F24",
+      Other = "#FEEF6B"
+    )) +
+    #scale_fill_viridis_d(option = "plasma") +
     theme_void() +
     labs(title = "Top 5 Microbes")
 
 p_hiv / p_microbes + plot_layout(heights = c(1, 1))
 
+(p_hiv/
+    p_mat_edu/
+    p_delivery/
+    p_sex/
+    p_gest_weeks/
+    p_microbes
+) + plot_layout(heights = rep(1, 6))
 
 
 
 
 
 #--pie chart
+
 pie_data <- microbe_maxdata %>%
-  count(max_microbe) %>%
+  count(max_microbe)%>%
   mutate(
     prevalence = n / sum(n),
-    label = paste0(max_microbe, "\n", round(prevalence * 100, 1), "%")
+    label = paste0(round(prevalence * 100, 1), "%"),
+  ) %>%
+  arrange(desc(-n))
+
+pie_data <- pie_data %>%
+  mutate(
+    max_microbe = factor(max_microbe, levels = max_microbe)
   )
 
 ggplot(pie_data, aes(x = "", y = prevalence, fill = max_microbe)) +
@@ -234,66 +339,90 @@ ggplot(pie_data, aes(x = "", y = prevalence, fill = max_microbe)) +
   coord_polar(theta = "y") +
   geom_text(aes(label = label), position = position_stack(vjust = 0.5)) +
   theme_void() +
+  scale_fill_manual(values = c(
+    Escherichia_coli = "#0D0887",
+    Bifidobacterium_bifidum = "#41049D",
+    Ruminococcus_gnavus = "#6A00A8",
+    Bifidobacterium_kashiwanohense = "#8F0DA4",
+    Bifidobacterium_pseudocatenulatum = "#B12A90",
+    Bifidobacterium_breve = "#D6436E",
+    Prevotella_copri = "#E86042",
+    Bifidobacterium_longum = "#F78F24",
+    Other = "#FEEF6B"
+  )) +              
+  #scale_fill_viridis_d(option = "plasma") +
   labs(title = "Microbe Prevalence Pie Chart")
 
 
 #-----PCoA Plot
-# --Plot by HIV status
-# distance_matrix <- vegdist(microbe_only_data, method = "bray") #lots of 0's, should i remove?
-# pcoa_result <- cmdscale(distance_matrix, k = 2)
-# 
-# pcoa_df <- as.data.frame(pcoa_result)
-# 
-# pcoa_df <- pcoa_df %>%
-#   rename(PCoA1 = V1, PCoA2 = V2)
-# 
-# 
-# pcoa_df$subject_id <- processed_micro$subject_id
-# meta_subset <- processed_metadata %>% select(subject_id, mom_hiv_status)
-# pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id")
-# pcoa_df <- pcoa_df %>%
-#   arrange(mom_hiv_status)%>%
-#   filter(!is.na(mom_hiv_status))
-# 
-# ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = mom_hiv_status)) +
-#   geom_point(size = 3, alpha = 0.8) +
-#   theme_minimal() +
-#   labs(
-#     title = "Microbiome PCoA Plot",
-#     x = "PCoA1",
-#     y = "PCoA2",
-#     color = "Mom HIV Status"
-#   ) +
-#   theme(plot.title = element_text(hjust = 0.5))
+#--Plot by HIV status
 
-
-#--Plot by top 5 microbes
-microbe_only_data <- microbe_only_data[rowSums(microbe_only_data) > 0, ]
-distance_matrix <- vegdist(microbe_only_data, method = "bray")
+distance_matrix <- vegdist(microbe_only_data, method = "bray") #lots of 0's, should i remove?
 pcoa_result <- cmdscale(distance_matrix, k = 2)
 
 pcoa_df <- as.data.frame(pcoa_result)
 
 pcoa_df <- pcoa_df %>%
-   rename(PCoA1 = V1, PCoA2 = V2)
+  rename(PCoA1 = V1, PCoA2 = V2)
+
 
 pcoa_df$subject_id <- processed_micro$subject_id
+meta_subset2 <- processed_metadata %>% select(subject_id, mom_hiv_status)
+pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id")
+pcoa_df <- pcoa_df %>%
+  arrange(mom_hiv_status)%>%
+  filter(!is.na(mom_hiv_status))
+
+ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = mom_hiv_status)) +
+  geom_point(size = 3, alpha = 0.8) +
+  theme_minimal() +
+  labs(
+    title = "Microbiome PCoA Plot",
+    x = "PCoA1",
+    y = "PCoA2",
+    color = "Mom HIV Status"
+  ) +
+  scale_color_manual(values = c("Negative" = "#73baf3", "Positive" = "#f37373")) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+
+#--Plot by top 5 microbes
+
+#microbe_bray <- microbe_only_data[rowSums(microbe_only_data) > 0, ]
+
+#lots of 0's, should i remove?
+distance_matrix <- vegdist(microbe_only_data, method = "bray") 
+pcoa_result <- cmdscale(distance_matrix, k = 2)
+pcoa_df <- as.data.frame(pcoa_result)
+pcoa_df <- pcoa_df %>%
+   rename(PCoA1 = V1, PCoA2 = V2)
+
+maxdata <- microbe_maxdata %>% select (subject_id, max_microbe)
+
+pcoa_df$subject_id <- processed_micro$subject_id
+
 meta_subset <- processed_metadata %>% select(subject_id, mom_hiv_status)
 pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id")
+max_microbe_vec <- setNames(maxdata$max_microbe, maxdata$subject_id)
+pcoa_df$max_microbe <- max_microbe_vec[pcoa_df$subject_id]
 pcoa_df <- pcoa_df %>%
   arrange(mom_hiv_status)
 
-
-top5_microbe_table <- colnames(microbe_only_data)[apply(microbe_only_data, 1, which.max)]
-top5_microbe_name <- names(sort(table(top5_microbe_table), decreasing = TRUE))[1:5]
-
-pcoa_df$top5_microbe_table <- ifelse(top5_microbe_table %in% top5_microbe_name, top5_microbe_table, "Other")
-pcoa_df$top5_microbe_table <- factor(pcoa_df$top5_microbe_table, levels = c(top5_microbe_name, "Other"))
-
-ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = dominant_microbe)) +
+ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = max_microbe)) +
   geom_point(size = 3, alpha = 0.8) +
   theme_minimal() +
-  scale_color_viridis_d(option = "plasma") +
+  scale_color_manual(values = c(
+    Escherichia_coli = "#0D0887",
+    Bifidobacterium_bifidum = "#41049D",
+    Ruminococcus_gnavus = "#6A00A8",
+    Bifidobacterium_kashiwanohense = "#8F0DA4",
+    Bifidobacterium_pseudocatenulatum = "#B12A90",
+    Bifidobacterium_breve = "#D6436E",
+    Prevotella_copri = "#E86042",
+    Bifidobacterium_longum = "#F78F24",
+    Other = "#FEEF6B"
+  )) +      
   labs(
     title = "PCoA Colored by Microbe",
     x = "PCoA1",
@@ -302,3 +431,53 @@ ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = dominant_microbe)) +
   ) +
   theme(plot.title = element_text(hjust = 0.5))
 
+
+
+
+#-- 2 separate for microbes
+distance_matrix <- vegdist(microbe_only_data, method = "bray") 
+pcoa_result <- cmdscale(distance_matrix, k = 2)
+pcoa_df <- as.data.frame(pcoa_result) %>%
+  rename(PCoA1 = V1, PCoA2 = V2)
+
+pcoa_df$subject_id <- processed_micro$subject_id
+
+meta_subset <- processed_metadata %>% select(subject_id, mom_hiv_status)
+pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id") %>%
+  filter(!is.na(mom_hiv_status))
+
+microbe_colors <- c(
+  Escherichia_coli = "#0D0887",
+  Bifidobacterium_bifidum = "#41049D",
+  Ruminococcus_gnavus = "#6A00A8",
+  Bifidobacterium_kashiwanohense = "#8F0DA4",
+  Bifidobacterium_pseudocatenulatum = "#B12A90",
+  Bifidobacterium_breve = "#D6436E",
+  Prevotella_copri = "#E86042",
+  Bifidobacterium_longum = "#F78F24",
+  Other = "#FEEF6B"
+)
+
+maxdata <- microbe_maxdata %>% select(subject_id, max_microbe)
+max_microbe_vec <- setNames(maxdata$max_microbe, maxdata$subject_id)
+pcoa_df$max_microbe <- max_microbe_vec[pcoa_df$subject_id]
+
+pcoa_df_POS <- pcoa_df %>% filter(mom_hiv_status == "Positive")
+pcoa_df_NEG <- pcoa_df %>% filter(mom_hiv_status == "Negative")
+
+p_microbe_POS <- ggplot(pcoa_df_POS, aes(x = PCoA1, y = PCoA2, color = max_microbe)) +
+  geom_point(size = 3, alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "PCoA HIV Positive",
+       x = "PCoA1", y = "PCoA2", color = "Top Microbe") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_color_manual(values = microbe_colors)
+
+p_microbe_NEG <- ggplot(pcoa_df_NEG, aes(x = PCoA1, y = PCoA2, color = max_microbe)) +
+  geom_point(size = 3, alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "PCoA HIV Negative",
+       x = "PCoA1", y = "PCoA2", color = "Top Microbe") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_color_manual(values = microbe_colors)
+p_microbe_NEG + p_microbe_POS
