@@ -28,7 +28,7 @@ processed_micro <- microdata %>%
     -datacolor,
     -visit,
     -westernized_cat, 
-    #-ageMonths,
+    -ageMonths,
     -sample  #should we do sample number or subject ID
   )%>%
   mutate(
@@ -50,7 +50,22 @@ processed_metadata <- metadata %>%
     "zymo_code_18m",
     "zymo_code_24m",
     
-    "medhx_mom___1_selfreport"
+    "subject_id",
+    "child_sex",
+    "delivery_6m",
+    "medhx_mom___1_selfreport",
+    "mat_edu_years",
+    "ga_weeks",
+    "solids_age_6m",
+    
+    "feeding_type_3m",
+    "feeding_type_6m",
+    "feeding_type_12m___1",
+    "feeding_type_12m___2",
+    "feeding_type_12m___3",
+    "feeding_type_18m___1",
+    "feeding_type_18m___2",
+    "feeding_type_18m___3"
   )%>%
   filter(
     !(zymo_code_3m == "" &
@@ -60,12 +75,35 @@ processed_metadata <- metadata %>%
         zymo_code_24m == "")
   )%>%
   rename(
-    mom_hiv_status = medhx_mom___1_selfreport
-  )%>%
+    delivery_mode = delivery_6m,
+    mom_hiv_status = medhx_mom___1_selfreport,
+    gest_weeks = ga_weeks,
+    feeding_3m = feeding_type_3m,
+    feeding_6m = feeding_type_6m,
+    solids_age = solids_age_6m,
+    
+  ) %>%
+  mutate(child_sex = factor(child_sex, ordered = FALSE, levels = c(0,1), labels = c("F", "M"))) %>%
+  mutate(delivery_mode = factor(delivery_mode, ordered = FALSE, levels = c(0, 1), labels = c("Vaginal", "Cesarean"))) %>%
   mutate(mom_hiv_status = factor(mom_hiv_status, ordered = FALSE, levels = c(0, 1), labels = c("Negative", "Positive"))) %>%
   arrange(mom_hiv_status) %>%
+  mutate(feeding_3m = factor(feeding_3m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
+  mutate(feeding_6m = factor(feeding_6m, ordered = FALSE, levels = c(1, 2, 3), labels = c("Breast", "Formula", "Mixed"))) %>%
+  mutate(
+    feeding_12m = if_else(feeding_type_12m___3 == 1, "Solid",
+                          if_else(feeding_type_12m___1 == 1, "B reast",
+                                  if_else(feeding_type_12m___2 == 1, "Formula", "N/A"))),
+    #feeding_12m = ifelse(is.na(feeding_12m), "N/A", feeding_12m),
+    feeding_12m = factor(feeding_12m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
+  ) %>%
+  mutate(
+    feeding_18m = if_else(feeding_type_18m___3 == 1, "Solid",
+                          if_else(feeding_type_18m___1 == 1, "Breast",
+                                  if_else(feeding_type_18m___2 == 1, "Formula", "N/A"))),
+    #feeding_18m = ifelse(is.na(feeding_18m), "N/A", feeding_18m),
+    feeding_18m = factor(feeding_18m, ordered = FALSE, levels = c("Breast", "Formula", "Solid"))
+  )%>%
   mutate( . , master_idx = 1:nrow(.))
-
 
 
 ##-----shannon diversity index
@@ -287,20 +325,21 @@ p_sex <- func_barcode(processed_metadata, master_idx, child_sex,
                       scale_fill_manual(values = c("F" = "orange", "M" = "lightblue")),
                       "Child Sex")
 
+microbe_colors <- c(
+  Escherichia_coli = "#0D0887",
+  Bifidobacterium_bifidum = "#41049D",
+  Ruminococcus_gnavus = "#6A00A8",
+  Bifidobacterium_kashiwanohense = "#8F0DA4",
+  Bifidobacterium_pseudocatenulatum = "#B12A90",
+  Bifidobacterium_breve = "#D6436E",
+  Prevotella_copri = "#E86042",
+  Bifidobacterium_longum = "#F78F24",
+  Other = "#FEEF6B"
+)
 
 p_microbes <- ggplot(microbe_maxdata, aes(x = subject_id, y = 1, fill = max_microbe)) +
     geom_tile(height = 1) +
-    scale_fill_manual(values = c(
-      Escherichia_coli = "#0D0887",
-      Bifidobacterium_bifidum = "#41049D",
-      Ruminococcus_gnavus = "#6A00A8",
-      Bifidobacterium_kashiwanohense = "#8F0DA4",
-      Bifidobacterium_pseudocatenulatum = "#B12A90",
-      Bifidobacterium_breve = "#D6436E",
-      Prevotella_copri = "#E86042",
-      Bifidobacterium_longum = "#F78F24",
-      Other = "#FEEF6B"
-    )) +
+    scale_fill_manual(values = microbe_colors) +
     #scale_fill_viridis_d(option = "plasma") +
     theme_void() +
     labs(title = "Top 5 Microbes")
@@ -314,7 +353,6 @@ p_hiv / p_microbes + plot_layout(heights = c(1, 1))
     p_gest_weeks/
     p_microbes
 ) + plot_layout(heights = rep(1, 6))
-
 
 
 
@@ -339,17 +377,7 @@ ggplot(pie_data, aes(x = "", y = prevalence, fill = max_microbe)) +
   coord_polar(theta = "y") +
   geom_text(aes(label = label), position = position_stack(vjust = 0.5)) +
   theme_void() +
-  scale_fill_manual(values = c(
-    Escherichia_coli = "#0D0887",
-    Bifidobacterium_bifidum = "#41049D",
-    Ruminococcus_gnavus = "#6A00A8",
-    Bifidobacterium_kashiwanohense = "#8F0DA4",
-    Bifidobacterium_pseudocatenulatum = "#B12A90",
-    Bifidobacterium_breve = "#D6436E",
-    Prevotella_copri = "#E86042",
-    Bifidobacterium_longum = "#F78F24",
-    Other = "#FEEF6B"
-  )) +              
+  scale_fill_manual(values = microbe_colors) +              
   #scale_fill_viridis_d(option = "plasma") +
   labs(title = "Microbe Prevalence Pie Chart")
 
@@ -412,17 +440,7 @@ pcoa_df <- pcoa_df %>%
 ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = max_microbe)) +
   geom_point(size = 3, alpha = 0.8) +
   theme_minimal() +
-  scale_color_manual(values = c(
-    Escherichia_coli = "#0D0887",
-    Bifidobacterium_bifidum = "#41049D",
-    Ruminococcus_gnavus = "#6A00A8",
-    Bifidobacterium_kashiwanohense = "#8F0DA4",
-    Bifidobacterium_pseudocatenulatum = "#B12A90",
-    Bifidobacterium_breve = "#D6436E",
-    Prevotella_copri = "#E86042",
-    Bifidobacterium_longum = "#F78F24",
-    Other = "#FEEF6B"
-  )) +      
+  scale_color_manual(values = microbe_colors) +      
   labs(
     title = "PCoA Colored by Microbe",
     x = "PCoA1",
@@ -446,17 +464,7 @@ meta_subset <- processed_metadata %>% select(subject_id, mom_hiv_status)
 pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id") %>%
   filter(!is.na(mom_hiv_status))
 
-microbe_colors <- c(
-  Escherichia_coli = "#0D0887",
-  Bifidobacterium_bifidum = "#41049D",
-  Ruminococcus_gnavus = "#6A00A8",
-  Bifidobacterium_kashiwanohense = "#8F0DA4",
-  Bifidobacterium_pseudocatenulatum = "#B12A90",
-  Bifidobacterium_breve = "#D6436E",
-  Prevotella_copri = "#E86042",
-  Bifidobacterium_longum = "#F78F24",
-  Other = "#FEEF6B"
-)
+
 
 maxdata <- microbe_maxdata %>% select(subject_id, max_microbe)
 max_microbe_vec <- setNames(maxdata$max_microbe, maxdata$subject_id)
@@ -481,3 +489,139 @@ p_microbe_NEG <- ggplot(pcoa_df_NEG, aes(x = PCoA1, y = PCoA2, color = max_micro
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_color_manual(values = microbe_colors)
 p_microbe_NEG + p_microbe_POS
+
+
+#-----Mean relative abundance
+
+row_totals <- rowSums(microbe_only_data)
+relative_abundance <- microbe_only_data
+
+for (i in 1:nrow(microbe_only_data)) {
+  relative_abundance[i, ] <- microbe_only_data[i, ] / 100
+}
+
+mean_abundance <- colMeans(relative_abundance)
+
+mean_abundance_df <- data.frame(
+  Microbe = names(mean_abundance),
+  mean_relative_abundance = as.vector(mean_abundance)
+)
+
+
+
+
+#-----Permanova
+micro_permanova <- microdata %>%
+  select(
+    -datasource,
+    -study_name,
+    -datagroup,
+    -site,
+    -datacolor,
+    -visit,
+    -westernized_cat, 
+    -sample,
+    -shannon_div,
+    -species_richness
+  ) %>%
+  mutate(
+    subject_id = gsub("khula-", "", subject_id)
+  )
+
+micro_permanova <- micro_permanova %>%
+left_join(
+  processed_metadata %>% select(
+    subject_id, 
+    mom_hiv_status,
+    child_sex,
+    delivery_mode
+    # feeding_12m,
+    # feeding_18m
+  ),
+  by = "subject_id"
+)
+
+
+
+
+#%>%
+  #mutate( . , master_idx = 1:nrow(.))
+
+dist_matrix <- vegdist(microbe_only_data, method = "bray")
+
+adonis2(dist_matrix ~ ageMonths, data = micro_permanova, permutations = 1000, na.action = na.omit)
+
+adonis2(dist_matrix ~ child_sex, data = micro_permanova, permutations = 1000, na.action = na.omit)
+
+adonis2(dist_matrix ~ mom_hiv_status, data = micro_permanova, permutations = 1000, na.action = na.omit)
+
+adonis2(dist_matrix ~ delivery_mode, data = micro_permanova, permutations = 1000, na.action = na.omit)
+
+
+#--adonis2 with ageMonths3, ageMonths6, ageMonths12
+
+meta3m <- micro_permanova %>%
+  filter(ageMonths < 4.5) 
+micro3m <- micro_permanova %>%
+  filter(ageMonths < 4.5) %>%
+  select(
+    -subject_id, 
+    -mom_hiv_status,
+    -child_sex,
+    -delivery_mode,
+    -ageMonths
+  )
+dist_matrix3 <- vegdist(micro3m, method = "bray")
+adonis2(dist_matrix3 ~ ageMonths, data = meta3m, permutations = 1000, na.action = na.omit)
+
+
+meta6m <- micro_permanova %>%
+  filter(ageMonths >= 4.5) %>%
+  filter(ageMonths < 9.0)
+micro6m <- micro_permanova %>%
+  filter(ageMonths >= 4.5) %>%
+  filter(ageMonths < 9.0) %>%
+  select(
+    -subject_id, 
+    -mom_hiv_status,
+    -child_sex,
+    -delivery_mode,
+    -ageMonths
+  )
+dist_matrix6 <- vegdist(micro6m, method = "bray")
+adonis2(dist_matrix6 ~ ageMonths, data = meta6m, permutations = 1000, na.action = na.omit)
+
+
+meta12m <- micro_permanova %>%
+  filter(ageMonths >= 9.0) %>%
+  filter(ageMonths < 15.0)
+micro12m <- micro_permanova %>%
+  filter(ageMonths >= 9.0) %>%
+  filter(ageMonths < 15.0) %>%
+  select(
+    -subject_id, 
+    -mom_hiv_status,
+    -child_sex,
+    -delivery_mode,
+    -ageMonths
+  )
+dist_matrix12 <- vegdist(micro12m, method = "bray")
+adonis2(dist_matrix12 ~ ageMonths, data = meta12m, permutations = 1000, na.action = na.omit)
+
+
+meta18m <- micro_permanova %>%
+  filter(ageMonths >= 15.0)
+micro18m <- micro_permanova %>%
+  filter(ageMonths >= 15.0) %>%
+  select(
+    -subject_id, 
+    -mom_hiv_status,
+    -child_sex,
+    -delivery_mode,
+    -ageMonths
+  )
+dist_matrix18 <- vegdist(micro18m, method = "bray")
+adonis2(dist_matrix18 ~ ageMonths, data = meta18m, permutations = 1000, na.action = na.omit)
+
+
+                                    
