@@ -249,6 +249,12 @@ p_rich_scatter_NEG <- ggplot(scatterdata_NEG, aes(x = ageMonths, y = species_ric
   ) + plot_layout (ncol = 2)
 
 
+
+
+
+
+
+
 #-----Barcode Plots
 
 # naonly_metadata <- metadata %>%
@@ -272,8 +278,9 @@ p_rich_scatter_NEG <- ggplot(scatterdata_NEG, aes(x = ageMonths, y = species_ric
 
 max_counts <- data.frame(table(microbe_maxdata$microbe_name))
 max_counts <- max_counts %>% arrange(desc(Freq))
-top5_names <- head((max_counts$Var1), 8)
-  
+top8_names <- head((max_counts$Var1), 8)
+top5_names <- head((max_counts$Var1), 5)
+
 meta_subset <- processed_metadata %>% select(subject_id, mom_hiv_status)
 
 subject_order <- meta_subset %>%
@@ -287,13 +294,15 @@ meta_subset <- meta_subset %>%
 
 microbe_maxdata <- microbe_maxdata %>%
   mutate(
-    max_microbe = ifelse(microbe_name %in% top5_names, microbe_name, "Other")
+    max_microbe = ifelse(microbe_name %in% top8_names, microbe_name, "Other")
+  ) %>%
+  mutate(
+    max_microbe_5 = ifelse(microbe_name %in% top5_names, microbe_name, "Other")
   ) %>%
   left_join(meta_subset, by = "subject_id") %>%
   mutate(subject_id = factor(subject_id, levels = subject_order)) %>% 
   arrange (subject_id) %>%
   filter(!is.na(mom_hiv_status))
-
 
 
 
@@ -415,7 +424,7 @@ ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = mom_hiv_status)) +
 
 
 
-#--Plot by top 5 microbes
+#--Plot by top 8 microbes
 
 #microbe_bray <- microbe_only_data[rowSums(microbe_only_data) > 0, ]
 
@@ -449,6 +458,36 @@ ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = max_microbe)) +
   ) +
   theme(plot.title = element_text(hjust = 0.5))
 
+
+#plot by top 5 microbes
+distance_matrix <- vegdist(microbe_only_data, method = "bray") 
+pcoa_result <- cmdscale(distance_matrix, k = 2)
+pcoa_df <- as.data.frame(pcoa_result)
+pcoa_df <- pcoa_df %>%
+  rename(PCoA1 = V1, PCoA2 = V2)
+
+maxdata <- microbe_maxdata %>% select (subject_id, max_microbe_5)
+
+pcoa_df$subject_id <- processed_micro$subject_id
+
+meta_subset <- processed_metadata %>% select(subject_id, mom_hiv_status)
+pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id")
+max_microbe_vec <- setNames(maxdata$max_microbe_5, maxdata$subject_id)
+pcoa_df$max_microbe_5 <- max_microbe_vec[pcoa_df$subject_id]
+pcoa_df <- pcoa_df %>%
+  arrange(mom_hiv_status)
+
+ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = max_microbe_5)) +
+  geom_point(size = 3, alpha = 0.8) +
+  theme_minimal() +
+  scale_color_manual(values = microbe_colors) +      
+  labs(
+    title = "PCoA Colored by Top 5 Microbe",
+    x = "PCoA1",
+    y = "PCoA2",
+    color = "Microbes"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5))
 
 
 
@@ -624,4 +663,64 @@ dist_matrix18 <- vegdist(micro18m, method = "bray")
 adonis2(dist_matrix18 ~ ageMonths, data = meta18m, permutations = 1000, na.action = na.omit)
 
 
+
+#-----linear regression
+scatter_data <- scatter_data %>%
+  mutate(
+    max_microbe = microbe_maxdata$max_microbe[match(subject_id, microbe_maxdata$subject_id)],
+    max_abundance = microbe_maxdata$max_abundance[match(subject_id, microbe_maxdata$subject_id)],
+    child_sex = processed_metadata$child_sex[match(subject_id, processed_metadata$subject_id)],
+    mat_edu_years = processed_metadata$mat_edu_years[match(subject_id, processed_metadata$subject_id)]
+  )
+
+func_lm <- function(microbe) {
+  microbe_set <- scatter_data %>%
+    filter(max_microbe == microbe) %>%
+    filter(
+      !is.na(mom_hiv_status),
+      !is.na(max_abundance),
+      !is.na(child_sex),
+      !is.na(ageMonths)
+    )
+  
+  model_microbe <- lm(max_abundance ~ ageMonths + mom_hiv_status + child_sex, data = microbe_set)
+  return(summary(model_microbe))
+}
+
+func_lm("Escherichia_coli")
+func_lm("Bifidobacterium_longum")
+func_lm("Prevotella_copri")
+func_lm("Bifidobacterium_breve")
+func_lm("Bifidobacterium_pseudocatenulatum")
+func_lm("Bifidobacterium_kashiwanohense")
+func_lm("Ruminococcus_gnavus")
+func_lm("Bifidobacterium_bifidum")
+
+plot_microbe_func <- function(microbe) {
+  microbe_set <- scatter_data %>%
+    filter(max_microbe == microbe) %>%
+    filter(
+      !is.na(mom_hiv_status),
+      !is.na(max_abundance),
+      !is.na(child_sex),
+      !is.na(ageMonths)
+    )
+  ggplot(data = microbe_set, aes(x = ageMonths, y = max_abundance, color = mom_hiv_status)) +
+    geom_point(size = 1, shape = 1) +
+    geom_smooth(method = "lm", linewidth = 0.5, se = TRUE) +
+    theme_minimal() +
+    xlab("Age (Months)") +
+    ylab("Microbe Abundance") +
+    labs(title = paste("Linear Regression of", microbe))+
+    theme_minimal()
+}
+
+plot_microbe_func("Escherichia_coli")
+plot_microbe_func("Bifidobacterium_longum")
+plot_microbe_func("Prevotella_copri")
+plot_microbe_func("Bifidobacterium_breve")
+plot_microbe_func("Bifidobacterium_pseudocatenulatum")
+plot_microbe_func("Bifidobacterium_kashiwanohense")
+plot_microbe_func("Ruminococcus_gnavus")
+plot_microbe_func("Bifidobacterium_bifidum")
                                     
