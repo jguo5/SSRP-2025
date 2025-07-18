@@ -15,27 +15,6 @@ library(vegan)
 library(patchwork)
 set.seed(123)
 
-microdata <- read.csv(fs::path(here::here(), "ext", "2025-06-25-JGuo-taxonomic_inputs.csv"), header=TRUE)
-attach(microdata)
-head(microdata, 3)
-
-processed_micro <- microdata %>%
-  select(
-    -datasource,
-    -study_name,
-    -datagroup,
-    -site,
-    -datacolor,
-    -visit,
-    -westernized_cat, 
-    -ageMonths,
-    -sample  #should we do sample number or subject ID
-  )%>%
-  mutate(
-    subject_id = gsub("khula-", "", subject_id)
-  )%>%
-  mutate( . , master_idx = 1:nrow(.))
-
 #metadata maternal hiv import
 metadata <- read.csv(fs::path(here::here(), "ext", "2025-03-07-KhulaSA_ClinicalMdata.csv"), header=TRUE)
 attach(metadata)
@@ -696,16 +675,16 @@ func_lm("Bifidobacterium_kashiwanohense")
 func_lm("Ruminococcus_gnavus")
 func_lm("Bifidobacterium_bifidum")
 
-plot_microbe_func <- function(microbe) {
+plot_microbe_func <- function(scatter_data, microbe) {
   microbe_set <- scatter_data %>%
-    filter(max_microbe == microbe) %>%
+    # filter(max_microbe == microbe) %>%
     filter(
       !is.na(mom_hiv_status),
       !is.na(max_abundance),
       !is.na(child_sex),
       !is.na(ageMonths)
     )
-  ggplot(data = microbe_set, aes(x = ageMonths, y = max_abundance, color = mom_hiv_status)) +
+  ggplot(data = microbe_set, aes(x = ageMonths, y = .data[[microbe]], color = mom_hiv_status)) +
     geom_point(size = 1, shape = 1) +
     geom_smooth(method = "lm", linewidth = 0.5, se = TRUE) +
     theme_minimal() +
@@ -715,12 +694,11 @@ plot_microbe_func <- function(microbe) {
     theme_minimal()
 }
 
-plot_microbe_func("Escherichia_coli")
-plot_microbe_func("Bifidobacterium_longum")
-plot_microbe_func("Prevotella_copri")
-plot_microbe_func("Bifidobacterium_breve")
-plot_microbe_func("Bifidobacterium_pseudocatenulatum")
-plot_microbe_func("Bifidobacterium_kashiwanohense")
-plot_microbe_func("Ruminococcus_gnavus")
-plot_microbe_func("Bifidobacterium_bifidum")
-                                    
+plot_microbe_func(scatter_data, "Escherichia_coli")
+plot_microbe_func(scatter_data, "Bifidobacterium_longum")
+plot_microbe_func(scatter_data, "Prevotella_copri")
+plot_microbe_func(scatter_data, "Bifidobacterium_breve")
+plot_microbe_func(scatter_data, "Bifidobacterium_pseudocatenulatum")
+plot_microbe_func(scatter_data, "Bifidobacterium_kashiwanohense")
+plot_microbe_func(scatter_data, "Ruminococcus_gnavus")
+plot_microbe_func(scatter_data, "Bifidobacterium_bifidum")
