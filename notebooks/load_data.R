@@ -1,6 +1,16 @@
-#####
-# Notebook to parse metadata for SSRP HIV project
-#####
+##Jackleen Guo
+##SSRP Graph Data Setup
+
+##-----setup
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+library(tidyverse)
+library(fs)
+library(here)
+library(patchwork)
+set.seed(1234)
+
 load_metadata <- function() {
   
   ## 1. Load the master metadata table
@@ -110,6 +120,18 @@ load_metadata <- function() {
       names_pattern = "(zymo_code|zymo_child_agemonths)_(\\d+m)"
     ) %>% na.omit(zymo_child_agemonths)
   
+  
+  
+  return(
+    list(
+      "sample_metadata" = processed_sample_metadata,
+      "subject_metadata" = processed_subject_metadata
+      )
+    )
+    
+}
+
+load_microdata <- function() {
   ## Microbiome data
   microdata <- read.csv(fs::path(here::here(), "ext", "2025-06-25-JGuo-taxonomic_inputs.csv"), header=TRUE)
   attach(microdata)
@@ -124,19 +146,26 @@ load_metadata <- function() {
       -datacolor,
       -visit,
       -westernized_cat, 
-      -ageMonths,
-      -sample  #should we do sample number or subject ID
+      #-ageMonths,
+      #-sample
     )%>%
     mutate(
       subject_id = gsub("khula-", "", subject_id)
     )%>%
     mutate( . , master_idx = 1:nrow(.))
   
+  microbe_only_data <- processed_micro %>%
+    select(
+      -subject_id, 
+      -master_idx,
+      -ageMonths,
+      -sample
+    )
+  
   return(
     list(
-      "sample_metadata" = processed_sample_metadata,
-      "subject_metadata" = processed_subject_metadata
-      )
+      "subject_microdata" = processed_micro,
+      "microbe_only_data" = microbe_only_data
     )
-    
+  )
 }
