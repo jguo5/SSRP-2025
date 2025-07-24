@@ -19,6 +19,7 @@ source("notebooks/shannon_microbe.R")
 source("notebooks/graph_colors.R")
 
 
+
 #-----Scatterplot 
 # microdata$subject_microdata$ageMonths <- as.numeric(microdata$subject_microdata$ageMonths)
 # microdata$subject_microdata$shannon_div <- as.numeric(microdata$subject_microdata$shannon_div)
@@ -43,7 +44,8 @@ p_shannon <- ggplot(scatter_data, aes(x = ageMonths, y = shannon_div, color = mo
   theme_minimal() +
   xlab("Child Age (Months)") +
   ylab("Shannon Diversity") +
-  scale_color_manual(values = mom_hiv_status_colors)
+  scale_color_manual(values = mom_hiv_status_colors) +
+  
 
 p_richness <- ggplot(scatter_data, aes(x = ageMonths, y = species_richness, color = mom_hiv_status)) +
   geom_point(size = 1, shape = 16) +
@@ -53,56 +55,65 @@ p_richness <- ggplot(scatter_data, aes(x = ageMonths, y = species_richness, colo
   ylab("Species Richness") +
   scale_color_manual(values = mom_hiv_status_colors)
 
-(p_shannon /
+joint_plot <- (p_shannon /
     p_richness
-) + plot_layout(heights = rep(1, 2))
+) + plot_layout(heights = rep(1, 2)) & theme(legend.position = "none")
+
+ggsave(
+  plot = joint_plot,
+  filename = "linear.svg",
+  width = 20,
+  height = 20,
+  units = "cm"
+)
+
 
 
 #-- separated HIV status
-
-scatterdata_POS <- scatter_data %>% filter(mom_hiv_status == "Positive")
-scatterdata_NEG <- scatter_data %>% filter(mom_hiv_status == "Negative")
-
-p_shannon_scatter_POS <- ggplot(scatterdata_POS, aes(x = ageMonths, y = shannon_div)) +
-  geom_point(size = 1, shape = 1) +
-  geom_smooth(method = 'lm', colour = "#f37373", linewidth = 0.5, se = TRUE) +
-  theme_minimal() +
-  xlab("Age (Months)") +
-  ylab("Shannon Diversity") +
-  labs(title = "Shannon Diversity HIV Positive")
-
-p_shannon_scatter_NEG <- ggplot(scatterdata_NEG, aes(x = ageMonths, y = shannon_div)) +
-  geom_point(size = 1, shape = 1) +
-  geom_smooth(method = 'lm', colour = "#73baf3", linewidth = 0.5, se = TRUE) +
-  theme_minimal() +
-  xlab("Age (Months)") +
-  ylab("Shannon Diversity") +
-  labs(title = "Shannon Diversity HIV Negative")
-
-
-p_rich_scatter_POS <- ggplot(scatterdata_POS, aes(x = ageMonths, y = species_richness)) +
-  geom_point(size = 1, shape = 1) +
-  geom_smooth(method = 'lm', colour = "#f37373", linewidth = 0.5, se = TRUE) +
-  theme_minimal() +
-  xlab("Age (Months)") +
-  ylab("Species Richness") +
-  labs(title = "Species Richness HIV Positive")
-
-p_rich_scatter_NEG <- ggplot(scatterdata_NEG, aes(x = ageMonths, y = species_richness)) +
-  geom_point(size = 1, shape = 1) +
-  geom_smooth(method = 'lm', colour = "#73baf3", linewidth = 0.5, se = TRUE) +
-  theme_minimal() +
-  xlab("Age (Months)") +
-  ylab("Species Richness") +
-  labs(title = "Species Richness HIV Negative")
-
-(p_shannon_scatter_POS / 
-    p_shannon_scatter_NEG / 
-    p_rich_scatter_POS / 
-    p_rich_scatter_NEG
-) + plot_layout (ncol = 2)
-
-
+# 
+# scatterdata_POS <- scatter_data %>% filter(mom_hiv_status == "Positive")
+# scatterdata_NEG <- scatter_data %>% filter(mom_hiv_status == "Negative")
+# 
+# p_shannon_scatter_POS <- ggplot(scatterdata_POS, aes(x = ageMonths, y = shannon_div)) +
+#   geom_point(size = 1, shape = 1) +
+#   geom_smooth(method = 'lm', colour = "#f37373", linewidth = 0.5, se = TRUE) +
+#   theme_minimal() +
+#   xlab("Age (Months)") +
+#   ylab("Shannon Diversity") +
+#   labs(title = "Shannon Diversity HIV Positive")
+# 
+# p_shannon_scatter_NEG <- ggplot(scatterdata_NEG, aes(x = ageMonths, y = shannon_div)) +
+#   geom_point(size = 1, shape = 1) +
+#   geom_smooth(method = 'lm', colour = "#73baf3", linewidth = 0.5, se = TRUE) +
+#   theme_minimal() +
+#   xlab("Age (Months)") +
+#   ylab("Shannon Diversity") +
+#   labs(title = "Shannon Diversity HIV Negative")
+# 
+# 
+# p_rich_scatter_POS <- ggplot(scatterdata_POS, aes(x = ageMonths, y = species_richness)) +
+#   geom_point(size = 1, shape = 1) +
+#   geom_smooth(method = 'lm', colour = "#f37373", linewidth = 0.5, se = TRUE) +
+#   theme_minimal() +
+#   xlab("Age (Months)") +
+#   ylab("Species Richness") +
+#   labs(title = "Species Richness HIV Positive")
+# 
+# p_rich_scatter_NEG <- ggplot(scatterdata_NEG, aes(x = ageMonths, y = species_richness)) +
+#   geom_point(size = 1, shape = 1) +
+#   geom_smooth(method = 'lm', colour = "#73baf3", linewidth = 0.5, se = TRUE) +
+#   theme_minimal() +
+#   xlab("Age (Months)") +
+#   ylab("Species Richness") +
+#   labs(title = "Species Richness HIV Negative")
+# 
+# (p_shannon_scatter_POS / 
+#     p_shannon_scatter_NEG / 
+#     p_rich_scatter_POS / 
+#     p_rich_scatter_NEG
+# ) + plot_layout (ncol = 2)
+# 
+# 
 
 #-----linear regression
 # scatter_data <- scatter_data %>%

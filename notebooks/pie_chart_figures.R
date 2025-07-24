@@ -9,12 +9,16 @@ library(tidyverse)
 library(fs)
 library(here)
 library(patchwork)
+library(showtext)
 set.seed(1234)
 
 source("notebooks/load_data.R")
 metadata <- load_metadata()
 microdata <- load_microdata()
-source("notebooks/max_data.R")
+source("notebooks/microdata_max_microbe.R")
+
+showtext_auto() 
+font_add_google(name = "Source Sans Pro", family = "Source Sans")
 
 
 #---Child Sex Pie Chart
@@ -38,10 +42,18 @@ pie_child_sex <- ggplot(pie_child_sex_df, aes(y = proportion, fill = child_sex))
     aes(x = 1, y = pos, label = labelSex),
     size = 4,
     color = "black") +
-  theme_void() +
+  theme_void(base_family = "Source Sans") +
   scale_fill_manual(values = c(F = "orange", M = "lightblue")) +
   labs(title = "Child Sex", fill = "Sex") +
   theme(plot.title = element_text(hjust = 0.5))
+
+ggsave(
+  plot = pie_child_sex,
+  filename = "pie_child_sex.svg",
+  width = 20,
+  height = 20,
+  units = "cm"
+)
 
 print(pie_child_sex)
 
@@ -74,14 +86,24 @@ pie_delivery <- ggplot(pie_delivery_df, aes(y = proportion, fill = delivery_mode
   labs(title = "Delivery Mode", fill = "Mode") +
   theme(plot.title = element_text(hjust = 0.5))
 
+ggsave(
+  plot = pie_delivery,
+  filename = "pie_delivery.svg",
+  width = 20,
+  height = 20,
+  units = "cm"
+)
+
+
+
 print(pie_delivery) 
 
 
 
 #--pie chart
 
-pie_data <- microbe_maxdata %>%
-  count(max_microbe)%>%
+pie_data <- max_microbes_data %>%
+  count(max_subject_microbe)%>%
   mutate(
     prevalence = n / sum(n),
     label = paste0(round(prevalence * 100, 1), "%"),
@@ -90,14 +112,21 @@ pie_data <- microbe_maxdata %>%
 
 pie_data <- pie_data %>%
   mutate(
-    max_microbe = factor(max_microbe, levels = max_microbe)
+    max_subject_microbe = factor(max_subject_microbe, levels = max_subject_microbe)
   )
 
-ggplot(pie_data, aes(x = "", y = prevalence, fill = max_microbe)) +
+microbe_pie <- ggplot(pie_data, aes(x = "", y = prevalence, fill = max_subject_microbe)) +
   geom_bar(stat = "identity", width = 1, color = "white") +
   coord_polar(theta = "y") +
   geom_text(aes(label = label), position = position_stack(vjust = 0.5)) +
-  theme_void() +
-  scale_fill_manual(values = microbe_colors) +              
-  #scale_fill_viridis_d(option = "plasma") +
-  labs(title = "Microbe Prevalence Pie Chart")
+  theme_void(base_family = "Source Sans") +
+  scale_fill_manual(values = microbe_colors)            
+  #labs(title = "Microbe Prevalence Pie Chart")
+
+ggsave(
+  plot = microbe_pie,
+  filename = "microbe_pie.svg",
+  width = 20,
+  height = 20,
+  units = "cm"
+)

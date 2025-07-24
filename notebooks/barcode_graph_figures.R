@@ -10,6 +10,7 @@ library(fs)
 library(here)
 library(patchwork)
 library(grid)
+library(svglite)
 set.seed(1234)
 
 source("notebooks/load_data.R")
@@ -24,13 +25,12 @@ func_barcode <- function(data, x, fill, scale_fill, title, guideopts) {
   p <- ggplot(data, aes(x = {{x}}, fill = {{fill}})) +
     geom_tile(aes(y = 1)) + 
     {{scale_fill}} +
-    # coord_cartesian(ylim = c(0, 1)) + 
-    theme_void(base_size = 16) +
+    theme_void(base_size = 20) +
     theme(
       legend.position = "none", #remove legend
       legend.title = element_text(size=12),
-      plot.margin = margin(0, 0, 0, 40),
-      axis.title.y = element_text(color = "black", size = 12, face = "bold")
+      plot.margin = margin(0, 10, 0, 10),
+      axis.title.y = element_text(color = "black", size = 16, face = "bold")
     ) +
     ylab(title) +
     guideopts
@@ -60,21 +60,21 @@ p_sex <- func_barcode(metadata$subject_metadata, master_idx, child_sex,
                       guideopts = guides(fill=guide_legend(ncol=1, title.position = "left", title="Child\nSex")))
 
 joint_plot <- (p_hiv/
-    p_mat_edu/
-    p_delivery/
-    p_sex/
-    p_gest_weeks
+                 p_mat_edu/
+                 p_delivery/
+                 p_sex/
+                 p_gest_weeks
 ) +
   plot_layout(ncol = 1, heights=rep(-1,5), guides = "collect") &
-  theme(legend.position='bottom', plot.margin = margin(0, 0, 0, 0), legend.margin = margin(0,10,0,10))
+  theme(legend.position='bottom', plot.margin = margin(0, 0, 0, 0), legend.margin = margin(0,0,0,0))
 
 ggsave(
   plot = joint_plot,
-  filename = "barcodes.png",
+  filename = "barcode.svg",
   width = 40,
   height = 14,
   units = "cm"
 )
 
-#--barcode graphs
+
 
