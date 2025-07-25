@@ -25,10 +25,11 @@ source("notebooks/graph_colors.R")
 # microdata$subject_microdata$shannon_div <- as.numeric(microdata$subject_microdata$shannon_div)
 
 scatter_data <- microdata$subject_microdata %>%
-  select(subject_id, (all_of(c("ageMonths", "shannon_div", "species_richness")))) %>% 
+  select(subject_id, (all_of(c("ageMonths", "shannon_div")))) %>% 
   mutate(
     subject_id = gsub("khula-", "", subject_id)
   )
+#, "species_richness"
 
 scatter_data <- scatter_data %>%
   left_join(
@@ -36,36 +37,63 @@ scatter_data <- scatter_data %>%
     by = "subject_id"
   )
 
-
-
 p_shannon <- ggplot(scatter_data, aes(x = ageMonths, y = shannon_div, color = mom_hiv_status)) +
   geom_point(size = 1, shape = 16) +
   geom_smooth(method = 'lm', colour = "black", linewidth = 0.5, se = FALSE) +
   theme_minimal() +
-  xlab("Child Age (Months)") +
-  ylab("Shannon Diversity") +
-  scale_color_manual(values = mom_hiv_status_colors) +
-  
+  labs(
+    title = "Shannon Diversity and Age",
+    x = "Infant Age (Months)",
+    y = "Shannon Diversity",
+    color = "Mom HIV Status"
+  ) +
+  scale_color_manual(values = mom_hiv_status_colors)  +
+  theme(
+    plot.title = element_text(family = "Untitled Sans", size = 20, hjust = 0.5),
+    legend.position = "none",
+    text = element_text(family = "Untitled Sans")
+  )
 
-p_richness <- ggplot(scatter_data, aes(x = ageMonths, y = species_richness, color = mom_hiv_status)) +
-  geom_point(size = 1, shape = 16) +
-  geom_smooth(method = 'lm', colour = "black", linewidth = 0.5, se = FALSE) +
-  theme_minimal() +
-  xlab("Child Age (Months)") +
-  ylab("Species Richness") +
-  scale_color_manual(values = mom_hiv_status_colors)
+lm_model <- lm(shannon_div ~ ageMonths, data = scatter_data)
+summary(lm_model)
 
-joint_plot <- (p_shannon /
-    p_richness
-) + plot_layout(heights = rep(1, 2)) & theme(legend.position = "none")
+
+print(p_shannon)
 
 ggsave(
-  plot = joint_plot,
-  filename = "linear.svg",
+  plot = p_shannon,
+  filename = "shannon.svg",
   width = 20,
-  height = 20,
+  height = 12,
   units = "cm"
 )
+
+#+
+  #theme(legend.position = "none")
+  
+# 
+# p_richness <- ggplot(scatter_data, aes(x = ageMonths, y = species_richness, color = mom_hiv_status)) +
+#   geom_point(size = 1, shape = 16) +
+#   geom_smooth(method = 'lm', colour = "black", linewidth = 0.5, se = FALSE) +
+#   theme_minimal() +
+#   xlab("Infant Age (Months)") +
+#   ylab("Species Richness") +
+#   scale_color_manual(values = mom_hiv_status_colors) +
+#   theme(legend.position = "none")
+# 
+# joint_plot <- (p_shannon /
+#     p_richness
+# ) + plot_layout(heights = rep(1, 2)) & theme(legend.position = "none")
+# 
+# ggsave(
+#   plot = joint_plot,
+#   filename = "linear.svg",
+#   width = 20,
+#   height = 20,
+#   units = "cm"
+# )
+
+
 
 
 
