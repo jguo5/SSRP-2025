@@ -9,7 +9,7 @@ library(tidyverse)
 library(fs)
 library(here)
 library(patchwork)
-library(showtext)
+
 set.seed(1234)
 
 source("notebooks/load_data.R")
@@ -17,6 +17,7 @@ metadata <- load_metadata()
 microdata <- load_microdata()
 source("notebooks/microdata_max_microbe.R")
 
+library(showtext)
 showtext_auto() 
 font_add_google(name = "Source Sans Pro", family = "Source Sans")
 
@@ -108,7 +109,7 @@ pie_data <- max_microbes_data %>%
     prevalence = n / sum(n),
     label = paste0(round(prevalence * 100, 1), "%"),
   ) %>%
-  arrange(desc(-n))
+  arrange(n)
 
 pie_data <- pie_data %>%
   mutate(
@@ -118,15 +119,30 @@ pie_data <- pie_data %>%
 microbe_pie <- ggplot(pie_data, aes(x = "", y = prevalence, fill = max_subject_microbe)) +
   geom_bar(stat = "identity", width = 1, color = "white") +
   coord_polar(theta = "y") +
-  geom_text(aes(label = label), position = position_stack(vjust = 0.5)) +
-  theme_void(base_family = "Source Sans") +
-  scale_fill_manual(values = microbe_colors)            
-  #labs(title = "Microbe Prevalence Pie Chart")
+  geom_text(aes(label = label), 
+            position = position_stack(vjust = 0.5), 
+            size = 4.5,  
+            family = "Untitled Sans") +
+  theme_void() +
+  scale_fill_manual(values = microbe_colors) +
+  labs(
+    # title = "Prevalence of Dominant Microbes",
+    fill = "Microbes"
+  ) +
+  theme(
+    plot.title = element_text(family = "Untitled Sans", size = 20, hjust = 0.5),
+    legend.title = element_text(family = "Untitled Sans", size = 16),
+    legend.text = element_text(family = "Untitled Sans", size = 14),
+    text = element_text(family = "Untitled Sans")
+  )
+
+print(microbe_pie)
 
 ggsave(
   plot = microbe_pie,
   filename = "microbe_pie.svg",
   width = 20,
   height = 20,
-  units = "cm"
+  units = "cm", 
+  dpi = 300
 )

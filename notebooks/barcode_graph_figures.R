@@ -19,6 +19,10 @@ microdata <- load_microdata()
 source("notebooks/microdata_max_microbe.R")
 source("notebooks/graph_colors.R")
 
+library(showtext)
+showtext_auto() 
+font_add_google(name = "Source Sans Pro", family = "Source Sans")
+
 #-----heatmap/barcode plot
 
 func_barcode <- function(data, x, fill, scale_fill, title, guideopts) {
@@ -33,7 +37,12 @@ func_barcode <- function(data, x, fill, scale_fill, title, guideopts) {
       axis.title.y = element_text(color = "black", size = 16, face = "bold")
     ) +
     ylab(title) +
-    guideopts
+    guideopts +
+    theme(
+      plot.title = element_text(family = "Untitled Sans", size = 20, hjust = 0.5),
+      legend.position = "none",
+      text = element_text(family = "Untitled Sans")
+    )
 }
 
 p_hiv <- func_barcode(metadata$subject_metadata, master_idx, mom_hiv_status, 

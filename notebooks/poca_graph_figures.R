@@ -18,6 +18,11 @@ microdata <- load_microdata()
 source("notebooks/microdata_max_microbe.R")
 source("notebooks/graph_colors.R")
 
+library(showtext)
+showtext_auto() 
+font_add_google(name = "Source Sans Pro", family = "Source Sans")
+
+
 #-----PCoA Plot
 #--Plot by HIV status
 
@@ -47,7 +52,13 @@ hiv_pcoa <- ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = mom_hiv_status)) +
     color = "Mom HIV Status"
   ) +
   scale_color_manual(values = c("Negative" = "#73baf3", "Positive" = "#f37373")) +
-  theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+  #theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+  theme(
+    plot.title = element_text(family = "Untitled Sans", size = 20, hjust = 0.5),
+    legend.position = "none",
+    text = element_text(family = "Untitled Sans")
+  )
+print(hiv_pcoa)
 
 ggsave(
   plot = hiv_pcoa,
@@ -92,7 +103,13 @@ top8_pcoa <- ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = max_subject_micro
     y = "PCoA2",
     color = "Microbes"
   ) +
-  theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+  #theme(plot.title = element_text(hjust = 0.5), legend.position = "none") 
+  theme(
+    plot.title = element_text(family = "Untitled Sans", size = 20, hjust = 0.5),
+    legend.position = "none",
+    text = element_text(family = "Untitled Sans")
+  )
+print(top8_pcoa)
 
 ggsave(
   plot = top8_pcoa,
@@ -103,76 +120,76 @@ ggsave(
 )
 
 
-
-#plot by top 5 microbes
-distance_matrix <- vegdist(microdata$microbe_only_data, method = "bray") 
-pcoa_result <- cmdscale(distance_matrix, k = 2)
-pcoa_df <- as.data.frame(pcoa_result)
-pcoa_df <- pcoa_df %>%
-  rename(PCoA1 = V1, PCoA2 = V2)
-
-maxdata <- max_microbes_data %>% select (subject_id, max_subject_microbe_5)
-
-pcoa_df$subject_id <- microdata$subject_microdata$subject_id
-
-meta_subset <- metadata$subject_metadata %>% select(subject_id, mom_hiv_status)
-pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id")
-max_microbe_vec <- setNames(maxdata$max_subject_microbe_5, maxdata$subject_id)
-pcoa_df$max_subject_microbe_5 <- max_microbe_vec[pcoa_df$subject_id]
-pcoa_df <- pcoa_df %>%
-  arrange(mom_hiv_status)
-
-ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = max_subject_microbe_5)) +
-  geom_point(size = 3, alpha = 0.8) +
-  theme_minimal() +
-  scale_color_manual(values = microbe_colors) +      
-  labs(
-    title = "PCoA Colored by Top 5 Microbe",
-    x = "PCoA1",
-    y = "PCoA2",
-    color = "Microbes"
-  ) +
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-
-#-- 2 separate for microbes
-distance_matrix <- vegdist(microdata$microbe_only_data, method = "bray") 
-pcoa_result <- cmdscale(distance_matrix, k = 2)
-pcoa_df <- as.data.frame(pcoa_result) %>%
-  rename(PCoA1 = V1, PCoA2 = V2)
-
-pcoa_df$subject_id <- microdata$subject_microdata$subject_id
-
-meta_subset <- metadata$subject_metadata %>% select(subject_id, mom_hiv_status)
-pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id") %>%
-  filter(!is.na(mom_hiv_status))
+# 
+# #plot by top 5 microbes
+# distance_matrix <- vegdist(microdata$microbe_only_data, method = "bray") 
+# pcoa_result <- cmdscale(distance_matrix, k = 2)
+# pcoa_df <- as.data.frame(pcoa_result)
+# pcoa_df <- pcoa_df %>%
+#   rename(PCoA1 = V1, PCoA2 = V2)
+# 
+# maxdata <- max_microbes_data %>% select (subject_id, max_subject_microbe_5)
+# 
+# pcoa_df$subject_id <- microdata$subject_microdata$subject_id
+# 
+# meta_subset <- metadata$subject_metadata %>% select(subject_id, mom_hiv_status)
+# pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id")
+# max_microbe_vec <- setNames(maxdata$max_subject_microbe_5, maxdata$subject_id)
+# pcoa_df$max_subject_microbe_5 <- max_microbe_vec[pcoa_df$subject_id]
+# pcoa_df <- pcoa_df %>%
+#   arrange(mom_hiv_status)
+# 
+# ggplot(pcoa_df, aes(x = PCoA1, y = PCoA2, color = max_subject_microbe_5)) +
+#   geom_point(size = 3, alpha = 0.8) +
+#   theme_minimal() +
+#   scale_color_manual(values = microbe_colors) +      
+#   labs(
+#     title = "PCoA Colored by Top 5 Microbe",
+#     x = "PCoA1",
+#     y = "PCoA2",
+#     color = "Microbes"
+#   ) +
+#   theme(plot.title = element_text(hjust = 0.5))
 
 
-
-maxdata <- max_microbes_data %>% select(subject_id, max_subject_microbe)
-max_microbe_vec <- setNames(maxdata$max_subject_microbe, maxdata$subject_id)
-pcoa_df$max_subject_microbe <- max_microbe_vec[pcoa_df$subject_id]
-
-pcoa_df_POS <- pcoa_df %>% filter(mom_hiv_status == "Positive")
-pcoa_df_NEG <- pcoa_df %>% filter(mom_hiv_status == "Negative")
-
-p_microbe_POS <- ggplot(pcoa_df_POS, aes(x = PCoA1, y = PCoA2, color = max_subject_microbe)) +
-  geom_point(size = 3, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "PCoA HIV Positive",
-       x = "PCoA1", y = "PCoA2", color = "Top Microbe") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_color_manual(values = microbe_colors)
-
-p_microbe_NEG <- ggplot(pcoa_df_NEG, aes(x = PCoA1, y = PCoA2, color = max_subject_microbe)) +
-  geom_point(size = 3, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "PCoA HIV Negative",
-       x = "PCoA1", y = "PCoA2", color = "Top Microbe") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_color_manual(values = microbe_colors)
-p_microbe_NEG + p_microbe_POS
+# 
+# #-- 2 separate for microbes
+# distance_matrix <- vegdist(microdata$microbe_only_data, method = "bray") 
+# pcoa_result <- cmdscale(distance_matrix, k = 2)
+# pcoa_df <- as.data.frame(pcoa_result) %>%
+#   rename(PCoA1 = V1, PCoA2 = V2)
+# 
+# pcoa_df$subject_id <- microdata$subject_microdata$subject_id
+# 
+# meta_subset <- metadata$subject_metadata %>% select(subject_id, mom_hiv_status)
+# pcoa_df <- left_join(pcoa_df, meta_subset, by = "subject_id") %>%
+#   filter(!is.na(mom_hiv_status))
+# 
+# 
+# 
+# maxdata <- max_microbes_data %>% select(subject_id, max_subject_microbe)
+# max_microbe_vec <- setNames(maxdata$max_subject_microbe, maxdata$subject_id)
+# pcoa_df$max_subject_microbe <- max_microbe_vec[pcoa_df$subject_id]
+# 
+# pcoa_df_POS <- pcoa_df %>% filter(mom_hiv_status == "Positive")
+# pcoa_df_NEG <- pcoa_df %>% filter(mom_hiv_status == "Negative")
+# 
+# p_microbe_POS <- ggplot(pcoa_df_POS, aes(x = PCoA1, y = PCoA2, color = max_subject_microbe)) +
+#   geom_point(size = 3, alpha = 0.8) +
+#   theme_minimal() +
+#   labs(title = "PCoA HIV Positive",
+#        x = "PCoA1", y = "PCoA2", color = "Top Microbe") +
+#   theme(plot.title = element_text(hjust = 0.5)) +
+#   scale_color_manual(values = microbe_colors)
+# 
+# p_microbe_NEG <- ggplot(pcoa_df_NEG, aes(x = PCoA1, y = PCoA2, color = max_subject_microbe)) +
+#   geom_point(size = 3, alpha = 0.8) +
+#   theme_minimal() +
+#   labs(title = "PCoA HIV Negative",
+#        x = "PCoA1", y = "PCoA2", color = "Top Microbe") +
+#   theme(plot.title = element_text(hjust = 0.5)) +
+#   scale_color_manual(values = microbe_colors)
+# p_microbe_NEG + p_microbe_POS
 
 
 
@@ -182,7 +199,7 @@ pcoa_microdata <- microdata$subject_microdata %>%
   select(
     -master_idx,
     -sample,
-    -species_richness 
+    #-species_richness 
   )
 micro_subset3 <- metadata$subject_metadata %>%
   select(
@@ -247,7 +264,12 @@ plot_pcoa_by_hiv <- function(dataframe, title) {
   theme_minimal() +
   labs(title = title, x = "PCoA1", y = "PCoA2", color = "Mom HIV Status") +
   scale_color_manual(values = c("Negative" = "#73baf3", "Positive" = "#f37373")) +
-  theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+  #theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+  theme(
+    plot.title = element_text(family = "Untitled Sans", size = 20, hjust = 0.5),
+    legend.position = "none",
+    text = element_text(family = "Untitled Sans")
+  )
 }
 
 pcoa_3m <- plot_pcoa_by_hiv(pcoa_3m_df, "PCoA by HIV (3 months)")

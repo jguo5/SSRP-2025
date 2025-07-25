@@ -36,6 +36,9 @@ micro_permanova <- micro_permanova %>%
       # feeding_18m
     ),
     by = "subject_id"
+  ) %>%
+  mutate(
+    mom_hiv_status = factor(mom_hiv_status)
   )
 
 
@@ -70,6 +73,8 @@ micro3m <- micro_permanova %>%
   )
 dist_matrix3 <- vegdist(micro3m, method = "bray")
 adonis2(dist_matrix3 ~ ageMonths, data = meta3m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix3 ~ child_sex, data = meta3m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix3 ~ delivery_mode, data = meta3m, permutations = 1000, na.action = na.omit)
 
 
 meta6m <- micro_permanova %>%
@@ -87,6 +92,8 @@ micro6m <- micro_permanova %>%
   )
 dist_matrix6 <- vegdist(micro6m, method = "bray")
 adonis2(dist_matrix6 ~ ageMonths, data = meta6m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix6 ~ child_sex, data = meta6m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix6 ~ delivery_mode, data = meta6m, permutations = 1000, na.action = na.omit)
 
 
 meta12m <- micro_permanova %>%
@@ -104,6 +111,8 @@ micro12m <- micro_permanova %>%
   )
 dist_matrix12 <- vegdist(micro12m, method = "bray")
 adonis2(dist_matrix12 ~ ageMonths, data = meta12m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix12 ~ child_sex, data = meta12m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix12 ~ delivery_mode, data = meta12m, permutations = 1000, na.action = na.omit)
 
 
 meta18m <- micro_permanova %>%
@@ -122,14 +131,18 @@ adonis2(dist_matrix18 ~ ageMonths, data = meta18m, permutations = 1000, na.actio
 
 #---maternal HIV across different ages
 # 3 months
-adonis2(dist_matrix3 ~ mom_hiv_status, data = meta3m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix3 ~ ageMonths + mom_hiv_status, data = meta3m, permutations = 1000, na.action = na.omit, by = "margin")
 
 # 6 months
-adonis2(dist_matrix6 ~ mom_hiv_status, data = meta6m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix6 ~ ageMonths + mom_hiv_status, data = meta6m, permutations = 1000, na.action = na.omit, by = "margin")
 
 # 12 months
-adonis2(dist_matrix12 ~ mom_hiv_status, data = meta12m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix12 ~ ageMonths + mom_hiv_status, data = meta12m, permutations = 1000, na.action = na.omit, by = "margin")
 
 # 18 months
-adonis2(dist_matrix18 ~ mom_hiv_status, data = meta18m, permutations = 1000, na.action = na.omit)
+adonis2(dist_matrix18 ~ ageMonths + mom_hiv_status, data = meta18m, permutations = 1000, na.action = na.omit, by = "margin")
+
+#all
+adonis2(dist_matrix ~ ageMonths + mom_hiv_status, data = micro_permanova, permutations = 1000, na.action = na.omit, by = "margin")
+
 
