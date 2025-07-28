@@ -146,3 +146,104 @@ ggsave(
   units = "cm", 
   dpi = 300
 )
+
+
+#----pie chart by hiv by microbes
+#positive
+pos_max_microbes_data <- max_microbes_data %>%
+  filter(mom_hiv_status == "Positive")
+
+pie_pos_data <- pos_max_microbes_data %>%
+  count(max_subject_microbe)%>%
+  mutate(
+    prevalence = n / sum(n),
+    label = paste0(round(prevalence * 100, 1), "%"),
+  ) %>%
+  arrange(n)
+
+pie_pos_data <- pie_pos_data %>%
+  mutate(
+    max_subject_microbe = factor(max_subject_microbe, levels = max_subject_microbe)
+  )
+
+microbe_pie_pos <- ggplot(pie_pos_data, aes(x = "", y = prevalence, fill = max_subject_microbe)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label), 
+            position = position_stack(vjust = 0.5), 
+            size = 4.5,  
+            family = "Untitled Sans") +
+  theme_void() +
+  scale_fill_manual(values = microbe_colors) +
+  labs(
+    title = "Prevalence of Microbes (Positive HIV)",
+    fill = "Microbes"
+  ) +
+  theme(
+    plot.title = element_text(family = "Untitled Sans", size = 20, hjust = 0.5),
+    # legend.title = element_text(family = "Untitled Sans", size = 16),
+    # legend.text = element_text(family = "Untitled Sans", size = 14),
+    text = element_text(family = "Untitled Sans"),
+    legend.position = "none"
+  )
+
+print(microbe_pie_pos)
+
+ggsave(
+  plot = microbe_pie_pos,
+  filename = "microbe_pie_pos.svg",
+  width = 20,
+  height = 20,
+  units = "cm", 
+  dpi = 300
+)
+
+
+#negative
+neg_max_microbes_data <- max_microbes_data %>%
+  filter(mom_hiv_status == "Negative")
+
+pie_neg_data <- neg_max_microbes_data %>%
+  count(max_subject_microbe)%>%
+  mutate(
+    prevalence = n / sum(n),
+    label = paste0(round(prevalence * 100, 1), "%"),
+  ) %>%
+  arrange(n)
+
+pie_neg_data <- pie_neg_data %>%
+  mutate(
+    max_subject_microbe = factor(max_subject_microbe, levels = max_subject_microbe)
+  )
+
+microbe_pie_neg <- ggplot(pie_neg_data, aes(x = "", y = prevalence, fill = max_subject_microbe)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label), 
+            position = position_stack(vjust = 0.5), 
+            size = 4.5,  
+            family = "Untitled Sans") +
+  theme_void() +
+  scale_fill_manual(values = microbe_colors) +
+  labs(
+    title = "Prevalence of Microbes (Negative HIV)",
+    fill = "Microbes"
+  ) +
+  theme(
+    plot.title = element_text(family = "Untitled Sans", size = 20, hjust = 0.5),
+    # legend.title = element_text(family = "Untitled Sans", size = 16),
+    # legend.text = element_text(family = "Untitled Sans", size = 14),
+    text = element_text(family = "Untitled Sans"),
+    legend.position = "none",
+  )
+
+print(microbe_pie_neg)
+
+ggsave(
+  plot = microbe_pie_neg,
+  filename = "microbe_pie_neg.svg",
+  width = 20,
+  height = 20,
+  units = "cm", 
+  dpi = 300
+)

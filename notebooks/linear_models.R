@@ -38,11 +38,11 @@ scatter_data <- scatter_data %>%
   )
 
 p_shannon <- ggplot(scatter_data, aes(x = ageMonths, y = shannon_div, color = mom_hiv_status)) +
-  geom_point(size = 1, shape = 16) +
+  geom_point(size = 4, shape = 16, alpha = 0.5) +
   geom_smooth(method = 'lm', colour = "black", linewidth = 0.5, se = FALSE) +
   theme_minimal() +
   labs(
-    title = "Shannon Diversity and Age",
+    title = "Shannon Diversity vs. Age",
     x = "Infant Age (Months)",
     y = "Shannon Diversity",
     color = "Mom HIV Status"
@@ -51,12 +51,15 @@ p_shannon <- ggplot(scatter_data, aes(x = ageMonths, y = shannon_div, color = mo
   theme(
     plot.title = element_text(family = "Untitled Sans", size = 20, hjust = 0.5),
     legend.position = "none",
-    text = element_text(family = "Untitled Sans")
+    text = element_text(family = "Untitled Sans"),
+    axis.title.y = element_text(size = 16),
+    axis.title.x = element_text(size = 16),
+    axis.text.y = element_text(size = 14),
+    axis.text.x = element_text(size = 14)
   )
 
 lm_model <- lm(shannon_div ~ ageMonths, data = scatter_data)
 summary(lm_model)
-
 
 print(p_shannon)
 
@@ -64,9 +67,11 @@ ggsave(
   plot = p_shannon,
   filename = "shannon.svg",
   width = 20,
-  height = 12,
+  height = 8,
   units = "cm"
 )
+
+
 
 #+
   #theme(legend.position = "none")

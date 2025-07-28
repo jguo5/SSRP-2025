@@ -28,3 +28,4 @@ for (i in 1:num_patients) { #go through all subjects
 }
 
 microdata$subject_microdata$shannon_div <- shannon_div
+#why does this take so long
